@@ -2,7 +2,7 @@
 
 * **Developer**: Syed Shahnawaz
 * **Role**: Frontend UI, Citizen Submission Flow, Storage Upload, and Authority Dashboard
-* **Branch**: `feat/report-dashboard`
+* **Branch**: `feat/frontend-ui`
 * **Target Integration Branch**: `master`
 
 ---

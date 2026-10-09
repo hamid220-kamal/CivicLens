@@ -28,7 +28,8 @@
 | Developer | Assigned Branch | Core Domain & Owned Files |
 | :--- | :--- | :--- |
 | **Hamid Kamal** | `feat/ai-rag` | **Backend & AI Pipeline**: `src/app/api/triage/`, `src/app/api/match/`, `src/lib/gemini.ts`, `src/lib/rag.ts`, `src/lib/types/api.ts`, `scripts/` |
-| **Syed Shahnawaz** | `feat/report-dashboard` | **Frontend & UI**: `src/app/page.tsx`, `src/app/report/`, `src/app/dashboard/`, `src/components/`, `src/lib/supabaseClient.ts` |
+| **Syed Shahnawaz** | `feat/frontend-ui` | **Frontend & UI**: `src/app/page.tsx`, `src/app/report/`, `src/app/dashboard/`, `src/components/`, `src/lib/supabaseClient.ts` |
+
 
 * **Cross-Editing Rule**: Do not modify files owned by the other developer, shared types, or database schemas without explicit coordination.
 * **Coordination**: Ownership is for conflict prevention; never duplicate files or refuse necessary integration work.
