@@ -1,5 +1,10 @@
 # CivicLens Demo Checklist (90-Second Hackathon Presentation)
 
+## Presentation URLs
+* **Production URL**: [https://civiclens-live.vercel.app](https://civiclens-live.vercel.app)
+* **Citizen Flow**: `https://civiclens-live.vercel.app/report`
+* **Authority Dashboard**: `https://civiclens-live.vercel.app/dashboard`
+
 ## Before Presentation
 - [ ] Laptop 1 (Citizen View): Browser opened to `/report` with location permissions granted.
 - [ ] Laptop 2 (Authority View): Browser opened to `/dashboard` showing live incident feed.
