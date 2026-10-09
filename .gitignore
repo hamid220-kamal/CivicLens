@@ -1,8 +1,44 @@
+# Dependencies
 node_modules/
+.pnp
+.pnp.js
+
+# Next.js build output
 .next/
 out/
+dist/
+build/
+*.tsbuildinfo
+
+# Secrets & Environment variables
 .env
 .env.local
-.DS_Store
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*
+!.env.example
+pass.txt
+*.pem
+*.key
+*.cert
+credentials.json
+
+# Knowledge base raw data
 knowledge-base/raw/*
 !knowledge-base/raw/.gitkeep
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# OS & Editor clutter
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
