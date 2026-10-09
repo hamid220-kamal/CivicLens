@@ -1,40 +1,55 @@
-# CivicLens — Hackathon Starter
+# CivicLens — AI Civic Intelligence Platform
 
-> **Pre-hackathon scaffold only.** This repository is intentionally NOT a completed project.
->
-> Hackathon goal: build a real, end-to-end CivicLens MVP during the event with no mocks or hard-coded demo responses.
+CivicLens turns citizen photos and geolocation into verified, deduplicated civic incidents routed to municipal departments with authentic citizen charter evidence.
 
-## Product
-CivicLens turns a citizen's photo + location + optional description into an AI-assisted civic case.
+> **Core Insight**: *One underlying civic incident connects multiple citizen reports.*
 
-Core flow:
+---
 
-**REPORT → UNDERSTAND → RAG → PRIORITIZE → MATCH → ROUTE → VERIFY**
+## Quick Start
 
-## Hackathon MVP
-1. Real image upload
-2. Real location capture
-3. Vision/LLM issue classification
-4. RAG-grounded civic guidance
-5. Severity/priority estimation
-6. Duplicate/incident matching against real submitted reports
-7. Department routing
-8. Authority dashboard
+### 1. Prerequisites
+* **Node.js**: `>= 18.18.0` (Node 24 LTS verified)
+* **npm**: `>= 9.0.0`
+* **Supabase Account**: Project configured with PostgreSQL + Storage
+* **Google AI Studio**: Gemini API Key with `gemini-2.5-flash`
 
-## What is intentionally NOT here
-- No fake reports
-- No fake AI outputs
-- No API keys
-- No completed frontend
-- No completed backend
-- No claimed municipal integration
-- No fabricated civic rules
+### 2. Setup & Run Locally
+```bash
+# Clone repository
+git clone https://github.com/hamid220-kamal/CivicLens.git
+cd CivicLens
 
-## Suggested stack
-- Next.js + TypeScript + Tailwind
-- Supabase Auth/Storage/Postgres
-- pgvector for RAG
-- Vision-capable LLM
-- OpenStreetMap for map/context
+# Install dependencies
+npm install
 
-See `docs/BUILD_PLAN.md` for the hackathon build sequence.
+# Configure environment variables
+# Copy .env.example to .env.local and add Supabase + Gemini keys
+cp .env.example .env.local
+
+# Test database and AI connectivity
+npm run test:connections
+
+# Start development server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) to view the application.
+
+---
+
+## Live Demo & Documentation
+
+* **Live Deployment**: [https://civiclens-live.vercel.app](https://civiclens-live.vercel.app)
+* **Hackathon MVP & Architecture Plan**: [docs/MVP_PLAN.md](file:///d:/CivicLens/docs/MVP_PLAN.md)
+* **Civic Knowledge Sources (RAG Catalog)**: [docs/RAG_SOURCES.md](file:///d:/CivicLens/docs/RAG_SOURCES.md)
+
+---
+
+## Hackathon Tech Stack
+* **Framework**: Next.js 14 (App Router) + TypeScript
+* **Styling**: Tailwind CSS
+* **Database & Storage**: Supabase (PostgreSQL, RLS, Storage bucket `civic-reports`)
+* **AI & Vision**: Google Gemini 2.5 Flash (`@google/generative-ai`)
+* **Knowledge Retrieval (RAG)**: Municipal Charter Grounding (Hyderabad / Telangana)
+
