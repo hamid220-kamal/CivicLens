@@ -152,57 +152,58 @@ Compares a new report against existing open incidents within spatial proximity (
 
 ### Git Strategy
 * **Base Branch**: `master` (or `main`)
-* **Hamid's Branch**: `feature/frontend-flow`
-* **Syed's Branch**: `feature/ai-pipeline`
+* **Hamid's Branch**: `feature/ai-backend` (Backend, AI, RAG, Database & APIs)
+* **Syed's Branch**: `feature/frontend-ui` (Frontend, Citizen Flow, Dashboard & Components)
 
 ---
 
-### Hamid (Developer 1) — Frontend & User Flows
-* **Branch**: `feature/frontend-flow`
+### Hamid (Developer 1) — Backend, AI, RAG & Database Pipeline
+* **Branch**: `feature/ai-backend`
 * **Owned Files**:
-  * `src/app/page.tsx` (Landing & navigation)
+  * `src/app/api/triage/route.ts` (Multimodal vision + RAG grounding logic)
+  * `src/app/api/match/route.ts` (Proximity & duplicate incident matcher)
+  * `src/lib/gemini.ts` (Google AI Studio SDK helper)
+  * `src/lib/rag.ts` (Knowledge retrieval helper querying `knowledge_chunks`)
+  * `src/lib/supabaseServer.ts` (Server-side Supabase client)
+  * `scripts/seed-knowledge.mjs` (Script to seed `knowledge-base/civic_knowledge_seeds.json` into Supabase)
+* **Dependency on Syed**: None for API implementation; uses test scripts and curl for verification.
+* **Pass/Fail Test**: Send image URL + coordinates to `/api/triage`, receive valid JSON matching the exact contract with real cited charter text and SLA.
+
+---
+
+### Syed (Developer 2) — Frontend & User Interfaces
+* **Branch**: `feature/frontend-ui`
+* **Owned Files**:
+  * `src/app/page.tsx` (Landing page & hero navigation)
   * `src/app/report/page.tsx` (Citizen photo capture, GPS, submission state)
   * `src/app/dashboard/page.tsx` (Authority dashboard, incident queue, report aggregator)
   * `src/components/ReportForm.tsx` (Upload form with camera/file picker & preview)
   * `src/components/IncidentCard.tsx` (Incident display with cited source modal)
   * `src/lib/supabaseClient.ts` (Browser Supabase client)
-* **Dependency on Syed**: Consumes `/api/triage` and `/api/match` responses. Can work against mock JSON for 30 minutes while Syed builds backend endpoints.
+* **Dependency on Hamid**: Consumes `/api/triage` and `/api/match` responses. Can work against mock JSON for 30 minutes while Hamid builds backend endpoints.
 * **Pass/Fail Test**: Submit a real photo from browser, verify image upload in Supabase Storage, and render the triage result receipt with citation details.
 
 ---
 
-### Syed (Developer 2) — AI Triage, RAG & Database Pipeline
-* **Branch**: `feature/ai-pipeline`
-* **Owned Files**:
-  * `src/app/api/triage/route.ts` (Multimodal vision + RAG grounding logic)
-  * `src/app/api/match/route.ts` (Proximity & issue duplicate matcher)
-  * `src/lib/gemini.ts` (Google AI Studio SDK helper)
-  * `src/lib/rag.ts` (Knowledge retrieval helper querying `knowledge_chunks`)
-  * `scripts/seed-knowledge.mjs` (Script to seed `knowledge-base/civic_knowledge_seeds.json` into Supabase)
-* **Dependency on Hamid**: None for API implementation; uses test script/Postman/curl for verification.
-* **Pass/Fail Test**: Send image URL + coordinates to `/api/triage`, receive valid JSON matching the contract with real cited charter text and SLA.
-
----
-
 ### Integration & Merge Procedure
-1. Syed completes `/api/triage` & seeds knowledge chunks -> tests with `node scripts/seed-knowledge.mjs`.
-2. Hamid connects `ReportForm.tsx` to `/api/triage`.
-3. Syed pushes `feature/ai-pipeline` -> Merged into `master`.
-4. Hamid pulls latest `master` into `feature/frontend-flow` and runs full end-to-end test.
-5. Hamid merges `feature/frontend-flow` into `master`.
+1. Hamid completes `/api/triage` & seeds knowledge chunks -> tests with `node scripts/seed-knowledge.mjs`.
+2. Syed connects `ReportForm.tsx` to `/api/triage`.
+3. Hamid pushes `feature/ai-backend` -> Merged into `master`.
+4. Syed pulls latest `master` into `feature/frontend-ui` and runs full end-to-end test.
+5. Syed merges `feature/frontend-ui` into `master`.
 
 ---
 
 ## 4. Five-Hour Build Schedule
 
-| Time Window | Phase | Hamid (Frontend) | Syed (Backend & AI) | Milestone Deliverable |
+| Time Window | Phase | Hamid (Backend & AI) | Syed (Frontend & UI) | Milestone Deliverable |
 | :--- | :--- | :--- | :--- | :--- |
-| **0:00 – 0:30** | **Foundation** | Build `/report` layout, camera input, and GPS hook. | Run `seed-knowledge.mjs`, create `gemini.ts` and `rag.ts`. | Knowledge base seeded in DB; UI captures photo + GPS. |
-| **0:30 – 1:30** | **Core AI Triage** | Connect Supabase Storage upload (`civic-reports` bucket). | Implement `POST /api/triage` with Gemini Vision + RAG lookup. | Real photo uploads to storage & gets classified via AI. |
-| **1:30 – 2:30** | **Citizen Receipt** | Build citation breakdown & receipt UI showing SLA & wing. | Implement `POST /api/match` for duplicate incident grouping. | End-to-end citizen flow working with verifiable citations. |
-| **2:30 – 3:30** | **Authority View** | Build `/dashboard` table showing aggregated incidents. | Connect report creation to update `incident.report_count`. | Authority sees duplicate reports linked to 1 incident. |
-| **3:30 – 4:15** | **Integration** | Merge branches, test multi-report submission flow. | Verify error handling (empty descriptions, night photos). | Full app working locally without console errors. |
-| **4:15 – 5:00** | **Deploy & Rehearse** | Deploy to `civiclens-live.vercel.app`, test live mobile upload. | Prepare 2 real test photos (Pothole & Garbage Dump) for demo. | Live deployment tested & 90s pitch rehearsed. |
+| **0:00 – 0:30** | **1. Foundation** | Run `seed-knowledge.mjs`, create `gemini.ts` and `rag.ts`. | Build `/report` layout, camera input, and GPS hook. | Knowledge base seeded in DB; UI captures photo + GPS. |
+| **0:30 – 1:30** | **2. Core AI Triage** | Implement `POST /api/triage` with Gemini Vision + RAG lookup. | Connect Supabase Storage upload (`civic-reports` bucket). | Real photo uploads to storage & gets classified via AI. |
+| **1:30 – 2:30** | **3. Grounded Receipt** | Implement `POST /api/match` for duplicate incident grouping. | Build citation breakdown & receipt UI showing SLA & wing. | End-to-end citizen flow working with verifiable citations. |
+| **2:30 – 3:30** | **4. Authority View** | Connect report creation to update `incident.report_count`. | Build `/dashboard` table showing aggregated incidents. | Authority sees duplicate reports linked to 1 incident. |
+| **3:30 – 4:15** | **5. Integration** | Verify error handling (empty descriptions, night photos). | Merge branches, test multi-report submission flow. | Full app working locally without console errors. |
+| **4:15 – 5:00** | **6. Deploy & Rehearse** | Prepare 2 real test photos (Pothole & Garbage Dump) for demo. | Deploy to `civiclens-live.vercel.app`, test live mobile upload. | Live deployment tested & 90s pitch rehearsed. |
 
 ---
 
