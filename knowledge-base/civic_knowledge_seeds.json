@@ -1,0 +1,62 @@
+[
+  {
+    "source_title": "GHMC Citizen Charter & Service Delivery Guidelines",
+    "source_publisher": "Greater Hyderabad Municipal Corporation",
+    "source_url": "https://www.ghmc.gov.in",
+    "category": "Roads & Infrastructure",
+    "department": "GHMC Engineering Wing (Roads)",
+    "sla_hours": 48,
+    "keywords": ["pothole", "road damage", "asphalt", "crater", "craters", "road cave-in", "pavement"],
+    "content": "Potholes and road surface damage on municipal roads fall under the GHMC Engineering Wing (Roads). Standard repair SLA is 48 hours for arterial and sub-arterial roads. High severity applies to potholes exceeding 10cm depth or situated in high-speed traffic corridors."
+  },
+  {
+    "source_title": "GHMC Solid Waste Management Operational Framework",
+    "source_publisher": "GHMC Health & Sanitation Wing",
+    "source_url": "https://www.ghmc.gov.in",
+    "category": "Sanitation & Waste Management",
+    "department": "GHMC Health & Sanitation Wing",
+    "sla_hours": 24,
+    "keywords": ["garbage", "trash", "waste", "dumper bin", "overflow", "illegal dumping", "debris", "dead animal"],
+    "content": "Overflowing dumper bins, illegal solid waste dumping on roadsides, and road sweeping fall under the GHMC Health & Sanitation Wing. Standard clearance SLA is 24 hours. Waste piles blocking pedestrian walkways or adjacent to water bodies receive elevated priority."
+  },
+  {
+    "source_title": "HMWSSB Water & Sewerage Citizen Charter",
+    "source_publisher": "Hyderabad Metropolitan Water Supply and Sewerage Board",
+    "source_url": "https://www.hyderabadwater.gov.in",
+    "category": "Water & Sewerage",
+    "department": "HMWSSB Operations & Maintenance",
+    "sla_hours": 24,
+    "keywords": ["sewage", "sewer", "manhole", "drain overflow", "water pipe burst", "drinking water contamination", "pipeline leak"],
+    "content": "Sewerage overflows, missing or damaged manhole lids, and drinking water pipeline bursts fall exclusively under HMWSSB. Standard response SLA is 24 hours. Open/damaged manholes on roadways represent immediate life-safety hazards and are treated as emergency priority."
+  },
+  {
+    "source_title": "TGSPDCL Electric Safety & Distribution Manual",
+    "source_publisher": "Telangana State Southern Power Distribution Company Ltd",
+    "source_url": "https://www.tgspdcl.in",
+    "category": "Electrical Safety",
+    "department": "TGSPDCL Operation Circle",
+    "sla_hours": 12,
+    "keywords": ["electric wire", "live wire", "hanging wire", "transformer sparking", "tilted pole", "fuse box", "shock hazard"],
+    "content": "Low-hanging live electrical conductors, tilted distribution poles, sparking distribution transformers, and exposed fuse boxes fall under TGSPDCL Operation Circle. Standard response SLA is 12 hours. Any sagging wire within pedestrian reach is an emergency life hazard."
+  },
+  {
+    "source_title": "HYDRAA Disaster Response & Waterbody Protection Charter",
+    "source_publisher": "MA&UD Dept, Govt. of Telangana",
+    "source_url": "https://maud.telangana.gov.in",
+    "category": "Urban Disaster & Flooding",
+    "department": "HYDRAA Emergency Response Team",
+    "sla_hours": 6,
+    "keywords": ["waterlogging", "urban flood", "storm drain blockage", "nala overflow", "lake encroachment", "inundation"],
+    "content": "Severe urban waterlogging, primary storm water drain (NALA) blockages, and lake buffer zone encroachments are handled by the HYDRAA Disaster Response Team in coordination with GHMC DRF. Response SLA for flash waterlogging is under 6 hours."
+  },
+  {
+    "source_title": "Hyderabad Traffic Police Civic Traffic Redressal",
+    "source_publisher": "Hyderabad City Police",
+    "source_url": "https://www.htp.gov.in",
+    "category": "Traffic & Road Safety",
+    "department": "Hyderabad Traffic Police Engineering Wing",
+    "sla_hours": 12,
+    "keywords": ["traffic light", "traffic signal", "signal failure", "road obstruction", "fallen tree on road", "junction blockage"],
+    "content": "Malfunctioning traffic signals, timer failures, and major traffic-obstructing physical obstacles fall under the Traffic Police Engineering Wing. Emergency SLA for signal malfunction at high-density junctions is 4 to 12 hours."
+  }
+]
