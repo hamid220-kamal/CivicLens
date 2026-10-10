@@ -64,7 +64,21 @@ export const trustBadges = [
   { emoji: '📋', label: 'Ward 4 DPW', description: 'Service Level Agreement' },
 ];
 
-export const incidentsData = [
+export interface IncidentItem {
+  id: string;
+  status: 'resolved' | 'inprogress' | 'dispatched';
+  statusLabel: string;
+  location: string;
+  title: string;
+  description: string;
+  timestamp: string;
+  footer: string;
+  footerColor: string;
+  imageUrl: string;
+  imageAlt: string;
+}
+
+export const incidentsData: IncidentItem[] = [
   {
     id: 'CV-8491',
     status: 'resolved',
