@@ -53,7 +53,7 @@ create policy "Anon citizen insert reports" on reports
 create policy "Public read reports" on reports
   for select to anon, authenticated
   using (true);
-
+-
 -- Updates (e.g. status changes, assignments) restricted to service_role or authenticated staff claim
 create policy "Staff or service update reports" on reports
   for update to authenticated, service_role
