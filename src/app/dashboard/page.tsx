@@ -7,6 +7,8 @@ import PriorityDispatchStream from '@/components/dashboard/PriorityDispatchStrea
 import OperationalQueueTable from '@/components/dashboard/OperationalQueueTable';
 import DashboardFilters from '@/components/dashboard/DashboardFilters';
 import KPICards from '@/components/dashboard/KPICards';
+import LoadingSkeleton from '@/components/dashboard/LoadingSkeleton';
+import EmptyState from '@/components/dashboard/EmptyState';
 
 export default function DashboardPage() {
   const [viewMode, setViewMode] = useState<'table' | 'card'>('card');
@@ -16,6 +18,8 @@ export default function DashboardPage() {
   const [sortBy, setSortBy] = useState('priority');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showEmptyState, setShowEmptyState] = useState(false);
   const [showComplianceModal, setShowComplianceModal] = useState(false);
   const [selectedCompliance, setSelectedCompliance] = useState<any>(null);
 
@@ -96,6 +100,7 @@ export default function DashboardPage() {
         {
           title: 'Municipal Code: § 22-108',
           code: 'Pedestrian Visibility Zone',
+          excerpt: 'Pedestrian visibility zones require proper illumination and signaling to ensure public safety at crosswalks.',
         },
       ],
     },
@@ -215,155 +220,174 @@ export default function DashboardPage() {
             {/* Telemetry Alert */}
             {!isOnline && <TelemetryAlert onRetry={() => setIsOnline(true)} />}
 
-            {/* Live Sync Status */}
-            <div className="bg-surface-alt rounded-lg border border-border p-4 mb-8 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-status-resolved rounded-full animate-pulse" />
-                <span className="text-sm font-semibold text-text-secondary">Live Sync (Online, 4s ago)</span>
-              </div>
-              <div className="flex gap-2">
-                <button className="px-4 py-2 text-sm font-semibold text-text-secondary hover:text-primary transition-colors flex items-center gap-2">
-                  📥 Export CSV / GIS
-                </button>
-                <button className="px-4 py-2 text-sm font-semibold text-text-secondary hover:text-primary transition-colors flex items-center gap-2">
-                  ⊕ + Manual Incident Entry
-                </button>
-              </div>
-            </div>
+            {/* Show Loading Skeleton */}
+            {isLoading && <LoadingSkeleton />}
 
-            {/* KPI Cards */}
-            <KPICards kpis={kpis} />
-
-            {/* Summary Stats */}
-            <div className="bg-surface rounded-lg border border-border p-6 mb-8">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  { label: 'All Reports', value: '1,248' },
-                  { label: 'Open Dispatches', value: '84' },
-                  { label: 'In Review / Engineering', value: '32' },
-                  { label: 'Resolved', value: '1,132' },
-                ].map((stat) => (
-                  <div key={stat.label} className="text-center">
-                    <p className="text-2xl font-bold text-primary">{stat.value}</p>
-                    <p className="text-xs text-text-secondary mt-1">{stat.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* View and Filter Controls */}
-            <div className="bg-surface rounded-lg border border-border p-4 sm:p-6 mb-8">
-              <div className="flex flex-col gap-4 mb-6">
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <h2 className="text-lg font-bold text-text-primary">Priority Dispatch Stream</h2>
-                  <button className="text-xs font-semibold text-text-secondary hover:text-primary transition-colors">
-                    3 Highlighted Orders
-                  </button>
-                </div>
-                <p className="text-sm text-text-secondary">Real-time telemetric updates active</p>
-              </div>
-
-              {/* Filters */}
-              <DashboardFilters
-                statusFilter={statusFilter}
-                severityFilter={severityFilter}
-                categoryFilter={categoryFilter}
-                sortBy={sortBy}
-                onStatusChange={setStatusFilter}
-                onSeverityChange={setSeverityFilter}
-                onCategoryChange={setCategoryFilter}
-                onSortChange={setSortBy}
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
+            {/* Show Empty State */}
+            {showEmptyState && !isLoading && (
+              <EmptyState
+                onResetFilters={() => {
+                  setStatusFilter('all');
+                  setSeverityFilter('all');
+                  setCategoryFilter('all');
+                  setSortBy('priority');
+                  setShowEmptyState(false);
+                }}
+                onRefresh={() => setShowEmptyState(false)}
               />
-            </div>
+            )}
 
-            {/* Priority Dispatch Stream */}
-            <PriorityDispatchStream 
-              incidents={priorityIncidents}
-              onComplianceClick={(compliance) => {
-                setSelectedCompliance(compliance);
-                setShowComplianceModal(true);
-              }}
-            />
-
-            {/* Operational Queue Section */}
-            <div className="bg-surface rounded-lg border border-border p-6 mt-8">
-              <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-                <h2 className="text-lg font-bold text-text-primary">Operational Queue Table</h2>
-                <div className="flex gap-2 flex-wrap">
-                  <button className="px-3 py-1 text-xs font-semibold text-text-secondary hover:text-primary transition-colors">
-                    📋 Columns
-                  </button>
-                  <button className="px-3 py-1 text-xs font-semibold text-text-secondary hover:text-primary transition-colors">
-                    🖨️ Print Manifest
-                  </button>
-                </div>
-              </div>
-
-              {/* Table View */}
-              <OperationalQueueTable incidents={operationalQueue} />
-
-              {/* Pagination */}
-              <div className="mt-6 flex items-center justify-center gap-2">
-                <button className="px-2 py-1 text-sm font-semibold text-text-secondary hover:text-primary transition-colors">
-                  ◀
-                </button>
-                {[1, 2, 3, '...', 17].map((page) => (
-                  <button
-                    key={page}
-                    className={`px-3 py-1 text-sm font-semibold rounded transition-colors ${
-                      page === 1 ? 'bg-primary text-white' : 'text-text-secondary hover:text-primary'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-                <button className="px-2 py-1 text-sm font-semibold text-text-secondary hover:text-primary transition-colors">
-                  ▶
-                </button>
-              </div>
-            </div>
-
-            {/* Developer Mode Section */}
-            <details className="bg-surface rounded-lg border border-border p-6 mt-8">
-              <summary className="text-lg font-bold text-text-primary cursor-pointer">
-                👨‍💻 Municipal Edge State Demonstrations
-              </summary>
-              <div className="mt-4 space-y-4">
-                <details className="bg-surface-alt rounded p-4">
-                  <summary className="font-semibold text-text-primary cursor-pointer">
-                    ⏳ Loading Skeleton State (Low-Bandwidth Telemetry)
-                  </summary>
-                  <p className="text-sm text-text-secondary mt-2">
-                    Pulsing geometry states matching UI components during offline buffering or dispatch network latency.
-                  </p>
-                </details>
-                <details className="bg-surface-alt rounded p-4">
-                  <summary className="font-semibold text-text-primary cursor-pointer">
-                    📦 Queue Cleared / Empty Filter State
-                  </summary>
-                  <div className="mt-2 text-center py-8">
-                    <p className="text-xl font-bold text-text-primary">All Clear</p>
-                    <p className="text-sm text-text-secondary mt-2">
-                      No reports in this filter queue
-                    </p>
-                    <p className="text-xs text-text-tertiary mt-2">
-                      All citizen submissions in Ward 4 have been triaged and assigned to maintenance crews. New reports will appear here automatically via live dispatch sync.
-                    </p>
-                    <button className="mt-4 px-4 py-2 text-sm font-semibold text-primary hover:text-primary-dark transition-colors">
-                      Reset Filters
+            {/* Normal Content */}
+            {!isLoading && !showEmptyState && (
+              <>
+                {/* Live Sync Status */}
+                <div className="bg-surface-alt rounded-lg border border-border p-4 mb-8 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-status-resolved rounded-full animate-pulse" />
+                    <span className="text-sm font-semibold text-text-secondary">Live Sync (Online, 4s ago)</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button className="px-4 py-2 text-sm font-semibold text-text-secondary hover:text-primary transition-colors flex items-center gap-2">
+                      📥 Export CSV / GIS
                     </button>
-                    <button className="ml-2 px-4 py-2 text-sm font-semibold text-primary hover:text-primary-dark transition-colors">
-                      🔄 Refresh Telemetry Stream
+                    <button className="px-4 py-2 text-sm font-semibold text-text-secondary hover:text-primary transition-colors flex items-center gap-2">
+                      ⊕ + Manual Incident Entry
                     </button>
                   </div>
-                  <p className="text-xs text-text-tertiary mt-4">
-                    Automatic heartbeat polling: active every 15s
-                  </p>
+                </div>
+
+                {/* KPI Cards */}
+                <KPICards kpis={kpis} />
+
+                {/* Summary Stats */}
+                <div className="bg-surface rounded-lg border border-border p-6 mb-8">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {[
+                      { label: 'All Reports', value: '1,248' },
+                      { label: 'Open Dispatches', value: '84' },
+                      { label: 'In Review / Engineering', value: '32' },
+                      { label: 'Resolved', value: '1,132' },
+                    ].map((stat) => (
+                      <div key={stat.label} className="text-center">
+                        <p className="text-2xl font-bold text-primary">{stat.value}</p>
+                        <p className="text-xs text-text-secondary mt-1">{stat.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* View and Filter Controls */}
+                <div className="bg-surface rounded-lg border border-border p-4 sm:p-6 mb-8">
+                  <div className="flex flex-col gap-4 mb-6">
+                    <div className="flex items-center justify-between flex-wrap gap-4">
+                      <h2 className="text-lg font-bold text-text-primary">Priority Dispatch Stream</h2>
+                      <button className="text-xs font-semibold text-text-secondary hover:text-primary transition-colors">
+                        3 Highlighted Orders
+                      </button>
+                    </div>
+                    <p className="text-sm text-text-secondary">Real-time telemetric updates active</p>
+                  </div>
+
+                  {/* Filters */}
+                  <DashboardFilters
+                    statusFilter={statusFilter}
+                    severityFilter={severityFilter}
+                    categoryFilter={categoryFilter}
+                    sortBy={sortBy}
+                    onStatusChange={setStatusFilter}
+                    onSeverityChange={setSeverityFilter}
+                    onCategoryChange={setCategoryFilter}
+                    onSortChange={setSortBy}
+                    viewMode={viewMode}
+                    onViewModeChange={setViewMode}
+                  />
+                </div>
+
+                {/* Priority Dispatch Stream */}
+                <PriorityDispatchStream 
+                  incidents={priorityIncidents}
+                  onComplianceClick={(compliance) => {
+                    setSelectedCompliance(compliance);
+                    setShowComplianceModal(true);
+                  }}
+                />
+
+                {/* Operational Queue Section */}
+                <div className="bg-surface rounded-lg border border-border p-6 mt-8">
+                  <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+                    <h2 className="text-lg font-bold text-text-primary">Operational Queue Table</h2>
+                    <div className="flex gap-2 flex-wrap">
+                      <button className="px-3 py-1 text-xs font-semibold text-text-secondary hover:text-primary transition-colors">
+                        📋 Columns
+                      </button>
+                      <button className="px-3 py-1 text-xs font-semibold text-text-secondary hover:text-primary transition-colors">
+                        🖨️ Print Manifest
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Table View */}
+                  <OperationalQueueTable incidents={operationalQueue} />
+
+                  {/* Pagination */}
+                  <div className="mt-6 flex items-center justify-center gap-2">
+                    <button className="px-2 py-1 text-sm font-semibold text-text-secondary hover:text-primary transition-colors">
+                      ◀
+                    </button>
+                    {[1, 2, 3, '...', 17].map((page) => (
+                      <button
+                        key={page}
+                        className={`px-3 py-1 text-sm font-semibold rounded transition-colors ${
+                          page === 1 ? 'bg-primary text-white' : 'text-text-secondary hover:text-primary'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button className="px-2 py-1 text-sm font-semibold text-text-secondary hover:text-primary transition-colors">
+                      ▶
+                    </button>
+                  </div>
+                </div>
+
+                {/* Developer Mode Section */}
+                <details className="bg-surface rounded-lg border border-border p-6 mt-8">
+                  <summary className="text-lg font-bold text-text-primary cursor-pointer">
+                    👨‍💻 Municipal Edge State Demonstrations
+                  </summary>
+                  <div className="mt-4 space-y-4">
+                    <details className="bg-surface-alt rounded p-4">
+                      <summary className="font-semibold text-text-primary cursor-pointer">
+                        ⏳ Loading Skeleton State (Low-Bandwidth Telemetry)
+                      </summary>
+                      <p className="text-sm text-text-secondary mt-2">
+                        Pulsing geometry states matching UI components during offline buffering or dispatch network latency.
+                      </p>
+                      <button
+                        onClick={() => setIsLoading(!isLoading)}
+                        className="mt-3 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded text-sm font-semibold transition-colors"
+                      >
+                        {isLoading ? '❌ Hide' : '▶️ Show'} Loading State
+                      </button>
+                    </details>
+                    <details className="bg-surface-alt rounded p-4">
+                      <summary className="font-semibold text-text-primary cursor-pointer">
+                        📦 Queue Cleared / Empty Filter State
+                      </summary>
+                      <p className="text-sm text-text-secondary mt-2">
+                        Demonstrates the interface when all incidents have been resolved or filtered.
+                      </p>
+                      <button
+                        onClick={() => setShowEmptyState(!showEmptyState)}
+                        className="mt-3 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded text-sm font-semibold transition-colors"
+                      >
+                        {showEmptyState ? '❌ Hide' : '▶️ Show'} Empty State
+                      </button>
+                    </details>
+                  </div>
                 </details>
-              </div>
-            </details>
+              </>
+            )}
           </main>
         </div>
       </div>
