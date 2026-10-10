@@ -2,15 +2,33 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
+import StatsSection from '@/components/home/StatsSection';
+import RecentResolutions from '@/components/home/RecentResolutions';
+import LowerCTA from '@/components/home/LowerCTA';
 
 export default function HomePage() {
+  const [showAnimations, setShowAnimations] = useState(false);
+
+  useEffect(() => {
+    // Trigger animations after component mounts
+    setShowAnimations(true);
+  }, []);
+
   return (
     <div className="bg-background min-h-screen">
       <Navbar />
 
       {/* HERO SECTION */}
-      <section className="relative w-full py-12 sm:py-16 md:py-20 lg:py-24 bg-gradient-to-br from-background via-surface to-background overflow-hidden">
+      <section className="relative w-full py-12 sm:py-16 md:py-20 lg:py-24 bg-gradient-to-br from-background via-surface to-background overflow-hidden" aria-labelledby="hero-heading">
+        {/* Skip to content link for accessibility */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-lg"
+        >
+          Skip to main content
+        </a>
         {/* Decorative elements */}
         <div className="absolute top-10 right-0 w-96 h-96 bg-primary-bg rounded-full blur-3xl opacity-40 -z-10"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-accent-bg rounded-full blur-3xl opacity-30 -z-10"></div>
@@ -20,12 +38,12 @@ export default function HomePage() {
             {/* Left: Copy & CTAs */}
             <div className="flex flex-col gap-6 sm:gap-8">
               <div className="space-y-4">
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-text-primary leading-tight">
+                <h1 id="hero-heading" className="text-4xl sm:text-5xl lg:text-6xl font-bold text-text-primary leading-tight animate-fade-in">
                   See it. Snap it.
                   <br />
                   <span className="text-primary">Get it fixed.</span>
                 </h1>
-                <p className="text-lg sm:text-xl text-text-secondary leading-relaxed max-w-2xl">
+                <p className="text-lg sm:text-xl text-text-secondary leading-relaxed max-w-2xl animate-fade-in-delay">
                   Report civic issues—potholes, garbage, sewer overflow—with a photo and GPS location. Get AI-assisted triage with real municipal guidelines and track progress in real-time.
                 </p>
               </div>
@@ -106,11 +124,11 @@ export default function HomePage() {
       </section>
 
       {/* HOW IT WORKS SECTION */}
-      <section className="w-full py-16 sm:py-20 lg:py-24 bg-surface">
+      <section className="w-full py-16 sm:py-20 lg:py-24 bg-surface" id="main-content" aria-labelledby="how-it-works-heading">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="text-center mb-12 sm:mb-16">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-text-primary mb-4">
+            <h2 id="how-it-works-heading" className="text-3xl sm:text-4xl lg:text-5xl font-bold text-text-primary mb-4">
               How it works
             </h2>
             <p className="text-lg text-text-secondary max-w-2xl mx-auto">
@@ -168,6 +186,15 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* STATS SECTION */}
+      <StatsSection />
+
+      {/* RECENT RESOLUTIONS SECTION */}
+      <RecentResolutions />
+
+      {/* LOWER CTA SECTION */}
+      <LowerCTA />
 
       {/* TRUST STRIP */}
       <section className="w-full py-12 sm:py-16 bg-surface-alt border-y border-border">

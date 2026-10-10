@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import RootLayoutClient from './layout-client';
 
 export const metadata: Metadata = {
   title: "CivicLens — AI-Powered Civic Intelligence",
@@ -14,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased bg-background text-text-primary min-h-screen">
-        {children}
+        <RootLayoutClient>{children}</RootLayoutClient>
       </body>
     </html>
   );

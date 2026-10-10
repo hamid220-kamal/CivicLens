@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import Logo from './Logo';
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -11,11 +12,9 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-lg group-hover:bg-primary-dark transition-colors">
-              CL
-            </div>
-            <span className="text-xl font-bold text-text-primary hidden sm:inline group-hover:text-primary transition-colors">
+          <Link href="/" className="flex items-center gap-2 group hover:opacity-80 transition-opacity">
+            <Logo size="md" showText={false} />
+            <span className="text-lg font-bold text-text-primary hidden sm:inline">
               CivicLens
             </span>
           </Link>
