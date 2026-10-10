@@ -18,6 +18,7 @@ export interface CivicEvidence {
 export interface DepartmentRecommendation {
   name: string; // e.g. "GHMC Engineering Wing (Roads)" or "unknown"
   reason: string; // Grounded reason or human review disclaimer
+  sla_hours?: number; // Optional advisory target timeframe from citizen charter
 }
 
 export interface ReportLocation {

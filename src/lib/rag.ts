@@ -148,7 +148,7 @@ export async function retrieveCivicGuidance(
     recommendedDepartment: {
       name: bestChunk.department || "unknown",
       reason: `Recommended based on ${bestChunk.source_title} (${bestChunk.source_publisher})`,
-      sla_hours: bestChunk.sla_hours,
+      sla_hours: typeof bestChunk.sla_hours === "number" ? bestChunk.sla_hours : undefined,
     },
   };
 }

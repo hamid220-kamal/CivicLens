@@ -179,6 +179,7 @@ export async function POST(req: NextRequest) {
       department_recommendation: {
         name: departmentRec.name,
         reason: departmentRec.reason,
+        sla_hours: departmentRec.sla_hours,
       },
       location: {
         latitude: latitude,
