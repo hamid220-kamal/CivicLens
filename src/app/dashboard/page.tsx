@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 
 export default function DashboardPage() {
@@ -15,7 +15,7 @@ export default function DashboardPage() {
     { label: 'Resolved Today', value: '24', icon: 'check', color: 'status-resolved' },
   ];
 
-  const incidents = [
+  const defaultIncidents = [
     {
       id: 'CV-2024-001234',
       type: 'Pothole',
@@ -25,6 +25,7 @@ export default function DashboardPage() {
       time: '2 hours ago',
       status: 'in_review',
       duplicates: 1,
+      image_url: '',
     },
     {
       id: 'CV-2024-001233',
@@ -35,6 +36,7 @@ export default function DashboardPage() {
       time: '4 hours ago',
       status: 'open',
       duplicates: 0,
+      image_url: '',
     },
     {
       id: 'CV-2024-001232',
@@ -45,8 +47,45 @@ export default function DashboardPage() {
       time: '6 hours ago',
       status: 'resolved',
       duplicates: 2,
+      image_url: '',
     },
   ];
+
+  const [incidents, setIncidents] = useState(defaultIncidents);
+
+  useEffect(() => {
+    async function fetchReports() {
+      try {
+        const res = await fetch(`/api/reports?status=${statusFilter}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.success && Array.isArray(data.reports) && data.reports.length > 0) {
+          const mapped = data.reports.map((r: any) => ({
+            id: r.id ? r.id.slice(0, 13).toUpperCase() : 'CV-NEW',
+            type: r.issue_type
+              ? r.issue_type.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+              : 'Civic Issue',
+            severity: r.severity || 'medium',
+            priority:
+              r.severity === 'critical' ? 9.5 : r.severity === 'high' ? 7.8 : r.severity === 'medium' ? 5.2 : 3.0,
+            location: r.location?.latitude
+              ? `${r.location.latitude.toFixed(4)}, ${r.location.longitude.toFixed(4)}`
+              : 'Hyderabad, Telangana',
+            time: 'Recently logged',
+            status: r.status === 'pending_review' ? 'in_review' : r.status || 'open',
+            duplicates: Array.isArray(r.possible_duplicates) ? r.possible_duplicates.length : 0,
+            image_url: r.image_url || '',
+          }));
+          setIncidents(mapped);
+        } else if (statusFilter === 'all') {
+          setIncidents(defaultIncidents);
+        }
+      } catch {
+        // Keep default sample items on error
+      }
+    }
+    fetchReports();
+  }, [statusFilter]);
 
   const severityColor = (severity: string) => ({
     low: 'bg-green-100 text-severity-low',
@@ -177,10 +216,18 @@ export default function DashboardPage() {
                 {incidents.map((incident) => (
                   <div key={incident.id} className="bg-surface rounded-lg border border-border overflow-hidden hover:shadow-lg transition-shadow">
                     {/* Thumbnail */}
-                    <div className="w-full h-40 bg-background border-b border-border flex items-center justify-center">
-                      <svg className="w-12 h-12 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
+                    <div className="w-full h-40 bg-background border-b border-border flex items-center justify-center overflow-hidden">
+                      {incident.image_url ? (
+                        <img
+                          src={incident.image_url}
+                          alt={incident.type}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <svg className="w-12 h-12 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      )}
                     </div>
 
                     {/* Content */}

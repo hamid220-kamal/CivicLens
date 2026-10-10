@@ -68,14 +68,40 @@ export default function ReportPage() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setToast({ type: 'success', message: 'Report submitted successfully!' });
+      const data = new FormData();
+      if (formData.photo) {
+        data.append('image', formData.photo);
+      }
+      if (formData.latitude) {
+        data.append('latitude', formData.latitude);
+      }
+      if (formData.longitude) {
+        data.append('longitude', formData.longitude);
+      }
+      if (formData.description) {
+        data.append('description', formData.description);
+      }
+
+      const response = await fetch('/api/analyze-report', {
+        method: 'POST',
+        body: data,
+      });
+
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to submit civic report.');
+      }
+
+      if (typeof window !== 'undefined' && result.report) {
+        sessionStorage.setItem('civiclens_last_report', JSON.stringify(result.report));
+      }
+
+      setToast({ type: 'success', message: 'Report analyzed & recorded with AI verification!' });
       setTimeout(() => {
         window.location.href = '/receipt';
-      }, 2000);
-    } catch {
-      setToast({ type: 'error', message: 'Failed to submit report. Please try again.' });
+      }, 1200);
+    } catch (err) {
+      setToast({ type: 'error', message: (err as Error).message || 'Failed to submit report. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }

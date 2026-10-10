@@ -40,7 +40,7 @@ async function runRealHttpE2ETest() {
   let isServerRunning = false;
   try {
     const pingRes = await fetch(`${targetServerUrl}/api/reports?limit=1`, {
-      signal: AbortSignal.timeout(3000),
+      signal: AbortSignal.timeout(8000),
     });
     if (pingRes.status < 500) {
       isServerRunning = true;

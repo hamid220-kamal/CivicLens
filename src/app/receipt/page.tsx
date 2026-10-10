@@ -1,36 +1,67 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import { CivicReport } from '@/lib/types/api';
 
 export default function ReceiptPage() {
-  const reportId = 'CV-2024-001234';
-  const issueType = 'Pothole';
-  const severity = 'high';
-  const priorityScore = 7.8;
-  const department = 'GHMC Engineering Wing (Roads)';
-  const slaHours = 48;
-  const reason = 'This pothole is located on a major commuter route with high vehicle traffic. The size and depth indicate risk of vehicle damage and potential pedestrian hazard.';
+  const [liveReport, setLiveReport] = useState<CivicReport | null>(null);
 
-  const sources = [
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('civiclens_last_report');
+      if (stored) {
+        try {
+          setLiveReport(JSON.parse(stored));
+        } catch {}
+      }
+    }
+  }, []);
+
+  const reportId = liveReport?.id ? liveReport.id.slice(0, 13).toUpperCase() : 'CV-2024-001234';
+  const issueType = liveReport?.issue_type
+    ? liveReport.issue_type.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    : 'Pothole';
+  const severity = (liveReport?.severity || 'high') as 'low' | 'medium' | 'high' | 'critical';
+  const priorityScore =
+    liveReport?.severity === 'critical'
+      ? 9.5
+      : liveReport?.severity === 'high'
+      ? 7.8
+      : liveReport?.severity === 'medium'
+      ? 5.2
+      : 3.0;
+  const department = liveReport?.department_recommendation?.name || 'GHMC Engineering Wing (Roads)';
+  const slaHours = liveReport?.department_recommendation?.sla_hours || 48;
+  const reason =
+    liveReport?.severity_reason ||
+    liveReport?.department_recommendation?.reason ||
+    'This pothole is located on a major commuter route with high vehicle traffic. The size and depth indicate risk of vehicle damage and potential pedestrian hazard.';
+
+  const defaultSources = [
     {
-      title: 'FHWA Pavement Management Guide',
-      publisher: 'Federal Highway Administration',
-      excerpt: 'Potholes exceeding 6 inches in diameter pose significant safety risk and should be repaired within 48 hours of detection.',
-    },
-    {
-      title: 'Municipal Code § 15-2-1',
-      publisher: 'City Government',
-      excerpt: 'All reported road hazards must be assessed and addressed according to severity tier within documented SLA timeframes.',
+      title: 'GHMC Citizen Charter & Service Delivery Guidelines',
+      publisher: 'Greater Hyderabad Municipal Corporation',
+      excerpt: 'Potholes exceeding standard maintenance thresholds must be inspected and scheduled for road repairs.',
     },
   ];
+
+  const sources =
+    liveReport?.evidence && liveReport.evidence.length > 0
+      ? liveReport.evidence.map((e) => ({
+          title: e.source_title,
+          publisher: e.publisher,
+          excerpt: e.excerpt,
+        }))
+      : defaultSources;
 
   const severityColor = {
     low: 'bg-green-100 text-severity-low',
     medium: 'bg-amber-100 text-severity-medium',
     high: 'bg-orange-100 text-severity-high',
     critical: 'bg-red-100 text-severity-critical',
-  }[severity];
+  }[severity] || 'bg-amber-100 text-severity-medium';
 
   return (
     <div className="bg-background min-h-screen">
@@ -54,12 +85,20 @@ export default function ReceiptPage() {
           <h2 className="text-lg font-bold text-text-primary mb-4">Issue Summary</h2>
 
           <div className="flex gap-6 mb-6">
-            {/* Photo Placeholder */}
-            <div className="w-24 h-24 rounded-lg bg-background border border-border flex-shrink-0 flex items-center justify-center">
-              <svg className="w-8 h-8 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
+            {/* Photo */}
+            {liveReport?.image_url ? (
+              <img
+                src={liveReport.image_url}
+                alt="Submitted civic issue"
+                className="w-24 h-24 rounded-lg object-cover border border-border flex-shrink-0"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-lg bg-background border border-border flex-shrink-0 flex items-center justify-center">
+                <svg className="w-8 h-8 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+            )}
 
             {/* Issue Info */}
             <div className="flex-1">
