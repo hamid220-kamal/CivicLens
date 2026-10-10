@@ -49,7 +49,7 @@ export async function analyzeCivicImage(
     const primaryModel = process.env.GEMINI_VISION_MODEL || "gemini-3.8-flash";
     const genAI = new GoogleGenerativeAI(apiKey);
 
-    const candidateModels = [primaryModel, "gemini-3.8-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+    const candidateModels = [primaryModel, "gemini-3.8-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemma-4-26b-a4b-it"];
 
     const userPrompt = citizenDescription
       ? `Citizen Description: "${citizenDescription}". Please analyze the attached image.`

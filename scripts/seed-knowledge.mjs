@@ -51,6 +51,10 @@ async function seedKnowledge() {
         sla_hours: item.sla_hours,
         keywords: item.keywords,
         content: item.content,
+        metadata: {
+          verification_status: item.verification_status || "verified_public_charter",
+          retrieval_date: item.retrieval_date || "2026-10-10",
+        },
       },
       { onConflict: "source_title" }
     );
@@ -66,15 +70,19 @@ async function seedKnowledge() {
         sla_hours: item.sla_hours,
         keywords: item.keywords,
         content: item.content,
+        metadata: {
+          verification_status: item.verification_status || "verified_public_charter",
+          retrieval_date: item.retrieval_date || "2026-10-10",
+        },
       });
 
       if (insertErr && !insertErr.message.includes("duplicate")) {
         console.warn(`⚠️ Notice for "${item.source_title}": ${insertErr.message}`);
       } else {
-        console.log(`✅ Seeded: ${item.source_title} (${item.department})`);
+        console.log(`✅ Seeded [${item.verification_status}]: ${item.source_title} -> ${item.department}`);
       }
     } else {
-      console.log(`✅ Seeded: ${item.source_title} (${item.department})`);
+      console.log(`✅ Seeded [${item.verification_status}]: ${item.source_title} -> ${item.department}`);
     }
   }
 
