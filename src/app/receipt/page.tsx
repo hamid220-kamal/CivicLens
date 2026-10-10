@@ -63,6 +63,9 @@ export default function ReceiptPage() {
     critical: 'bg-red-100 text-severity-critical',
   }[severity] || 'bg-amber-100 text-severity-medium';
 
+  const [copied, setCopied] = useState(false);
+  const fullReportId = liveReport?.id || reportId;
+
   return (
     <div className="bg-background min-h-screen">
       <Navbar />
@@ -76,8 +79,28 @@ export default function ReceiptPage() {
             </svg>
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-text-primary mb-2">Report Submitted</h1>
-          <p className="text-lg text-text-secondary mb-1">Your issue has been received and is being analyzed.</p>
-          <p className="text-sm font-mono text-text-tertiary">Report ID: <span className="font-semibold text-primary">{reportId}</span></p>
+          <p className="text-lg text-text-secondary mb-1">Your issue has been recorded and triaged with municipal AI.</p>
+
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-3">
+            <span className="text-xs sm:text-sm font-mono bg-surface-alt px-3 py-1.5 rounded border border-border text-text-primary">
+              Report ID: <strong className="text-primary">{fullReportId}</strong>
+            </span>
+            <button
+              onClick={() => {
+                if (typeof navigator !== 'undefined') {
+                  navigator.clipboard.writeText(fullReportId);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }
+              }}
+              className="text-xs px-3 py-1.5 bg-surface border border-border rounded font-semibold text-primary hover:bg-primary-bg transition-colors"
+            >
+              {copied ? '✓ Copied!' : 'Copy ID'}
+            </button>
+          </div>
+          <p className="text-xs text-text-tertiary mt-2">
+            Submitted: {liveReport?.created_at ? new Date(liveReport.created_at).toLocaleString() : 'Just now'} • Current Status: <span className="font-semibold text-primary">{liveReport?.status || 'pending_review'}</span>
+          </p>
         </div>
 
         {/* Issue Summary */}
@@ -108,7 +131,11 @@ export default function ReceiptPage() {
                   {severity.charAt(0).toUpperCase() + severity.slice(1)}
                 </span>
               </div>
-              <p className="text-text-secondary">Main Street & 5th Avenue</p>
+              <p className="text-text-secondary">
+                {liveReport?.location?.latitude
+                  ? `Location: ${liveReport.location.latitude.toFixed(4)}°N, ${liveReport.location.longitude?.toFixed(4)}°E`
+                  : 'Main Street & 5th Avenue'}
+              </p>
             </div>
           </div>
 
@@ -132,7 +159,7 @@ export default function ReceiptPage() {
             <div>
               <p className="text-sm font-semibold text-text-secondary mb-3">Department</p>
               <p className="text-text-primary font-semibold">{department}</p>
-              <p className="text-xs text-text-tertiary mt-2">✓ AI recommendation</p>
+              <p className="text-xs text-text-tertiary mt-2">✓ Grounded AI recommendation</p>
             </div>
           </div>
         </div>
@@ -168,11 +195,6 @@ export default function ReceiptPage() {
                     <h3 className="font-semibold text-text-primary">{source.title}</h3>
                     <p className="text-xs text-text-tertiary">{source.publisher}</p>
                   </div>
-                  <button className="text-primary hover:text-primary-dark transition-colors flex-shrink-0">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </button>
                 </div>
                 <p className="text-sm text-text-secondary italic border-l-2 border-border pl-3">
                   "{source.excerpt}"
@@ -185,10 +207,10 @@ export default function ReceiptPage() {
         {/* Action Buttons */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link
-            href="/track"
-            className="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary-dark transition-colors text-center min-h-[44px] flex items-center justify-center"
+            href={liveReport?.id ? `/track?id=${liveReport.id}` : '/track'}
+            className="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary-dark transition-colors text-center min-h-[44px] flex items-center justify-center gap-2"
           >
-            Track This Report
+            Track This Report →
           </Link>
           <Link
             href="/report"

@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
+    const id = searchParams.get("id");
     const limit = parseInt(searchParams.get("limit") || "50", 10);
     const offset = parseInt(searchParams.get("offset") || "0", 10);
 
@@ -22,7 +23,9 @@ export async function GET(req: NextRequest) {
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
 
-    if (status && status !== "all") {
+    if (id) {
+      query = query.eq("id", id);
+    } else if (status && status !== "all") {
       query = query.eq("status", status);
     }
 
@@ -99,6 +102,58 @@ export async function POST(req: NextRequest) {
         evidence: body.evidence || [],
         status: body.status || "pending_review",
       })
+      .select("*")
+      .single();
+
+    if (error) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, report: data });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: (error as Error).message },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * PATCH /api/reports
+ * Updates a report status (e.g. from authority dashboard triage).
+ */
+export async function PATCH(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { id, status } = body;
+    if (!id || !status) {
+      return NextResponse.json(
+        { success: false, error: "Report id and status are required." },
+        { status: 400 }
+      );
+    }
+
+    const validStatuses = [
+      "pending_review",
+      "open",
+      "in_review",
+      "assigned",
+      "in_progress",
+      "resolved",
+      "dismissed",
+    ];
+    if (!validStatuses.includes(status)) {
+      return NextResponse.json(
+        { success: false, error: `Invalid status. Must be one of: ${validStatuses.join(", ")}` },
+        { status: 400 }
+      );
+    }
+
+    const supabase = getSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("reports")
+      .update({ status })
+      .eq("id", id)
       .select("*")
       .single();
 
