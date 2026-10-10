@@ -197,10 +197,10 @@ export default function HomePage() {
       <LowerCTA />
 
       {/* TRUST STRIP */}
-      <section className="w-full py-12 sm:py-16 bg-surface-alt border-y border-border">
+      <section className="w-full py-12 sm:py-16 bg-surface-alt border-y border-border" aria-labelledby="trust-heading">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
-            <p className="text-sm sm:text-base font-semibold text-text-secondary uppercase tracking-wide">
+            <p id="trust-heading" className="text-sm sm:text-base font-semibold text-text-secondary uppercase tracking-wide">
               ✓ Backed by real civic guidelines
             </p>
           </div>
@@ -227,11 +227,12 @@ export default function HomePage() {
       </section>
 
       {/* FOOTER */}
-      <footer className="w-full bg-surface border-t border-border">
+      <footer className="w-full bg-surface border-t border-border" aria-labelledby="footer-heading">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
             {/* Brand */}
             <div className="sm:col-span-2 lg:col-span-1">
+              <h3 id="footer-heading" className="sr-only">CivicLens Footer</h3>
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-lg">
                   CL
