@@ -45,58 +45,61 @@ export async function analyzeCivicImage(
     throw new Error("Missing GEMINI_API_KEY environment variable.");
   }
 
-  const primaryModel = process.env.GEMINI_VISION_MODEL || "gemini-3.8-flash";
-  const genAI = new GoogleGenerativeAI(apiKey);
+  try {
+    const primaryModel = process.env.GEMINI_VISION_MODEL || "gemini-3.8-flash";
+    const genAI = new GoogleGenerativeAI(apiKey);
 
-  const candidateModels = [primaryModel, "gemini-3.8-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+    const candidateModels = [primaryModel, "gemini-3.8-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
 
-  const userPrompt = citizenDescription
-    ? `Citizen Description: "${citizenDescription}". Please analyze the attached image.`
-    : "Please analyze the attached civic issue image.";
+    const userPrompt = citizenDescription
+      ? `Citizen Description: "${citizenDescription}". Please analyze the attached image.`
+      : "Please analyze the attached civic issue image.";
 
-  const imagePart = {
-    inlineData: {
-      data: imageBuffer.toString("base64"),
-      mimeType: mimeType || "image/jpeg",
-    },
-  };
+    const imagePart = {
+      inlineData: {
+        data: imageBuffer.toString("base64"),
+        mimeType: mimeType || "image/jpeg",
+      },
+    };
 
-  for (const modelName of candidateModels) {
-    try {
-      const model = genAI.getGenerativeModel({
-        model: modelName,
-        generationConfig: {
-          responseMimeType: "application/json",
-        },
-      });
+    for (const modelName of candidateModels) {
+      try {
+        const model = genAI.getGenerativeModel({
+          model: modelName,
+          generationConfig: {
+            responseMimeType: "application/json",
+          },
+        });
 
-      const result = await model.generateContent([
-        SYSTEM_PROMPT,
-        imagePart,
-        userPrompt,
-      ]);
+        const result = await model.generateContent([
+          SYSTEM_PROMPT,
+          imagePart,
+          userPrompt,
+        ]);
 
-      const responseText = result.response.text();
-      const parsed = JSON.parse(responseText);
+        const responseText = result.response.text();
+        const parsed = JSON.parse(responseText);
 
-      const validSeverities: CivicSeverity[] = ["low", "medium", "high", "critical", "uncertain"];
-      const severity: CivicSeverity = validSeverities.includes(parsed.severity)
-        ? parsed.severity
-        : "medium";
+        const validSeverities: CivicSeverity[] = ["low", "medium", "high", "critical", "uncertain"];
+        const severity: CivicSeverity = validSeverities.includes(parsed.severity)
+          ? parsed.severity
+          : "medium";
 
-      return {
-        issue_type: parsed.issue_type || "other",
-        severity,
-        severity_reason: parsed.severity_reason || "Visual analysis completed.",
-        description_summary: parsed.description_summary || citizenDescription || "Reported civic issue.",
-        suggested_keywords: Array.isArray(parsed.suggested_keywords) ? parsed.suggested_keywords : [parsed.issue_type || "civic"],
-        raw_confidence: typeof parsed.confidence === "number" ? parsed.confidence : undefined,
-      };
-    } catch (err) {
-      // Try next model if model not found
-      console.warn(`Model ${modelName} call notice: ${(err as Error).message}`);
+        return {
+          issue_type: parsed.issue_type || "other",
+          severity,
+          severity_reason: parsed.severity_reason || "Visual analysis completed.",
+          description_summary: parsed.description_summary || citizenDescription || "Reported civic issue.",
+          suggested_keywords: Array.isArray(parsed.suggested_keywords) ? parsed.suggested_keywords : [parsed.issue_type || "civic"],
+          raw_confidence: typeof parsed.confidence === "number" ? parsed.confidence : undefined,
+        };
+      } catch (err) {
+        // Try next model if model not found
+        console.warn(`Model ${modelName} call notice: ${(err as Error).message}`);
+      }
     }
-  }
+
+    throw new Error("All candidate Gemini models failed to generate content.");
   } catch (error) {
     console.error("Gemini Vision API error:", (error as Error).message);
     // Fallback if model fails or image cannot be processed
