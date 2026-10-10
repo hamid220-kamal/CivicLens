@@ -2,8 +2,34 @@
 
 * **Developer**: Syed Shahnawaz
 * **Role**: Frontend UI, Citizen Submission Flow, Storage Upload, and Authority Dashboard
-* **Branch**: `feat/report-dashboard`
+* **Branch**: `feat/frontend-ui` (Updated from `feat/report-dashboard`)
 * **Target Integration Branch**: `master`
+* **Updated**: October 10, 2026
+
+---
+
+## 📋 Frontend Assets & Documentation Available
+
+Complete frontend documentation and mockups are now available in the `feat/frontend-ui` branch:
+
+**Reference Files:**
+* `docs/FRONTEND_PAGES.md` - Complete frontend specification (850+ lines)
+* `docs/mockups/` - Reference mockup documentation for each section
+* `public/assets/README.md` - Design system, colors, typography, components
+* `FRONTEND_ASSETS_SUMMARY.md` - Quick reference guide
+* `scripts/generate_mockups.py` - Generate mockup images
+
+**Documentation Covers:**
+- ✅ Home page layout with hero and feature cards
+- ✅ Citizen report 7-step workflow (photo, location, AI triage, dedup, review)
+- ✅ Incident tracking page with status timeline
+- ✅ Authority dashboard with KPIs and incident queue
+- ✅ AI workflow visualization
+- ✅ UI component library
+- ✅ Color palette, typography, responsive breakpoints
+- ✅ Accessibility and performance guidelines
+
+**Use these for implementation reference while working on `feat/frontend-ui`.**
 
 ---
 
@@ -175,15 +201,54 @@ export interface MatchResponse {
 
 ## 7. Git Workflow for Syed
 
+### Working on `feat/frontend-ui` Branch
+
 ```cmd
-REM 1. Create and switch to your feature branch
-git checkout master
-git checkout -b feat/report-dashboard
+REM 1. Switch to feat/frontend-ui branch
+git checkout feat/frontend-ui
 
-REM 2. Work, test, and commit your frontend changes
+REM 2. Review the new frontend assets and documentation
+REM    - Read: docs/FRONTEND_PAGES.md (complete spec)
+REM    - Read: public/assets/README.md (design system)
+REM    - Read: docs/mockups/*.md (individual section specs)
+
+REM 3. Make your component changes based on the documented specs
 git add src/app/report/ src/app/dashboard/ src/components/ src/lib/supabaseClient.ts
-git commit -m "feat(ui): implement citizen report submission flow and authority dashboard"
 
-REM 3. Push your branch
-git push -u origin feat/report-dashboard
+REM 4. Commit your changes with descriptive message
+git commit -m "feat(ui): implement citizen report form with GPS and photo upload
+
+- Add ReportForm component with camera picker
+- Integrate HTML5 geolocation for GPS capture
+- Setup Supabase Storage upload for civic-reports bucket
+- Add loading and error states with toast notifications"
+
+REM 5. Push your changes to feat/frontend-ui
+git push origin feat/frontend-ui
+
+REM 6. When ready to integrate, create PR from feat/frontend-ui to master
+REM    (or use: git push origin feat/frontend-ui:master to force merge)
 ```
+
+### Branch Status
+
+- **Current Branch**: `feat/frontend-ui`
+- **Documentation**: ✅ Complete (3000+ lines)
+- **Mockup Specs**: ✅ Available for reference
+- **Asset Files**: ✅ Committed and ready
+- **Ready for Implementation**: ✅ Yes
+
+### Quick Reference for Implementation
+
+When building components, refer to:
+
+| Task | Reference File |
+|------|-----------------|
+| Overall structure | `docs/FRONTEND_PAGES.md` |
+| Design system | `public/assets/README.md` |
+| Home page | `public/assets/mockups/home/README.md` |
+| Report form (7 steps) | `public/assets/mockups/citizen-report/README.md` |
+| Tracking page | `public/assets/mockups/incident-tracking/README.md` |
+| Authority dashboard | `public/assets/mockups/authority-dashboard/README.md` |
+| AI workflow | `public/assets/mockups/ai-workflow/README.md` |
+| Component specs | `public/assets/README.md` (Component Library section) |
