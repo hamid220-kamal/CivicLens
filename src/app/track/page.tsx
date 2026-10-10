@@ -1,347 +1,209 @@
-/**
- * Track Incident Page
- * Post-submission incident status tracking with timeline, SLA countdown, evidence, and community engagement
- * 
- * Reuses: Icon, TopBar
- * New: IncidentTimeline, ComplianceAccordion, TriageScoreGauge
- * 
- * Features:
- * - Breadcrumb navigation
- * - Duplicate detection banner
- * - Incident header with status badges
- * - Vertical audit trail timeline (5 stages)
- * - SLA countdown gauge
- * - Evidence photos + location map
- * - Priority score breakdown
- * - Municipal authority assignment
- * - Community upvote/follow system
- * - Compliance standards accordion
- * - Copy, share, download actions
- */
+'use client';
 
-import Icon from '@/components/ui/Icon';
-import TopBar from '@/components/layout/TopBar';
-import IncidentTimeline from '@/components/IncidentTimeline';
-import ComplianceAccordion from '@/components/ComplianceAccordion';
-import TriageScoreGauge from '@/components/TriageScoreGauge';
-import Link from 'next/link';
+import Navbar from '@/components/Navbar';
 
-import {
-  incidentTrackingData,
-  timelineEvents,
-  regulationsData,
-} from '@/lib/placeholder';
+export default function TrackPage() {
+  const reportId = 'CV-2024-001234';
+  const issueType = 'Pothole';
+  const severity = 'high';
+  const status = 'in_review';
+  const statusLabel = 'In Review';
 
-export default function TrackIncidentPage() {
-  const incident = incidentTrackingData;
+  const timeline = [
+    { step: 'Submitted', completed: true, current: false, time: '2 hours ago' },
+    { step: 'Under Review', completed: false, current: true, time: 'Now' },
+    { step: 'Assigned', completed: false, current: false, time: '—' },
+    { step: 'In Progress', completed: false, current: false, time: '—' },
+    { step: 'Resolved', completed: false, current: false, time: '—' },
+  ];
+
+  const severityColor = {
+    low: 'bg-green-100 text-severity-low',
+    medium: 'bg-amber-100 text-severity-medium',
+    high: 'bg-orange-100 text-severity-high',
+    critical: 'bg-red-100 text-severity-critical',
+  }[severity];
+
+  const statusBgColor = {
+    open: 'bg-blue-100 text-status-open',
+    in_review: 'bg-purple-100 text-status-review',
+    resolved: 'bg-green-100 text-status-resolved',
+  }[status];
 
   return (
-    <div className="bg-background min-h-screen text-on-surface">
-      {/* Header */}
-      <TopBar title="Track Incident" />
+    <div className="bg-background min-h-screen">
+      <Navbar />
 
-      <main className="w-full pt-16 bg-background min-h-screen">
-        <div className="w-full px-margin-mobile md:px-margin py-space-lg flex flex-col gap-space-lg max-w-7xl mx-auto">
-          {/* Breadcrumb Navigation */}
-          <nav aria-label="Breadcrumbs" className="flex flex-wrap items-center justify-between gap-space-sm text-on-surface-variant">
-            <div className="flex items-center gap-space-xs font-label-md text-label-md">
-              <Link className="hover:text-primary transition-colors flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-secondary rounded" href="/">
-                <Icon name="home" size="md" />
-                <span>Dashboard</span>
-              </Link>
-              <span className="text-outline-variant">/</span>
-              <Link className="hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-secondary rounded" href="/track">
-                Track Incident
-              </Link>
-              <span className="text-outline-variant">/</span>
-              <span aria-current="page" className="text-primary font-body-md-bold">
-                #{incident.id}
-              </span>
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            <div>
+              <p className="text-sm text-text-tertiary mb-1">Report ID</p>
+              <p className="text-xl sm:text-2xl font-bold text-text-primary">{reportId}</p>
             </div>
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${severityColor}`}>
+              {severity.charAt(0).toUpperCase() + severity.slice(1)}
+            </span>
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBgColor}`}>
+              {statusLabel}
+            </span>
+          </div>
+          <p className="text-text-secondary">{issueType} • Main Street & 5th Avenue</p>
+        </div>
 
-            <div className="flex items-center gap-space-xs">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container font-label-sm text-label-sm text-on-surface-variant">
-                <span className="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
-                Live Dispatch Sync: Active
-              </span>
-            </div>
-          </nav>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Timeline */}
+            <div className="bg-surface rounded-lg border border-border p-6 sm:p-8">
+              <h2 className="text-lg font-bold text-text-primary mb-6">Status Timeline</h2>
 
-          {/* Duplicate Detection Banner */}
-          <aside aria-label="Duplicate report detected notice" className="w-full rounded-xl bg-surface-container-high p-space-md md:p-space-lg shadow-sm">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
-              <div className="flex items-start gap-space-md">
-                <div className="w-10 h-10 rounded-lg bg-surface-container-lowest text-primary flex items-center justify-center shrink-0 shadow-sm">
-                  <Icon name="difference" size="xl" />
-                </div>
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-2">
-                    <span className="font-headline-sm text-headline-sm text-on-surface">
-                      Possible Duplicate Detected Nearby
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant font-label-sm text-label-sm">
-                      18m Offset
-                    </span>
+              <div className="space-y-6">
+                {timeline.map((item, idx) => (
+                  <div key={item.step} className="flex gap-6">
+                    {/* Timeline Marker */}
+                    <div className="flex flex-col items-center flex-shrink-0">
+                      <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center ${
+                        item.completed
+                          ? 'bg-success border-success'
+                          : item.current
+                            ? 'bg-primary border-primary ring-4 ring-primary-bg'
+                            : 'bg-surface-alt border-border'
+                      }`}>
+                        {item.completed ? (
+                          <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        ) : item.current ? (
+                          <div className="w-2 h-2 bg-white rounded-full" />
+                        ) : null}
+                      </div>
+                      {idx < timeline.length - 1 && (
+                        <div className={`w-1 h-16 my-2 ${item.completed ? 'bg-success' : 'bg-border'}`} />
+                      )}
+                    </div>
+
+                    {/* Timeline Content */}
+                    <div className="pt-1.5">
+                      <h3 className={`font-semibold ${item.completed || item.current ? 'text-text-primary' : 'text-text-secondary'}`}>
+                        {item.step}
+                      </h3>
+                      <p className="text-sm text-text-tertiary mt-1">{item.time}</p>
+                    </div>
                   </div>
-                  <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-                    Incident <strong className="text-on-surface font-body-md-bold">#CV-2024-9179</strong> was
-                    logged 18 meters away on 5th Ave & Elm St. Merging community signals combines telemetry data
-                    while preserving the active 48-hour municipal SLA window.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-space-sm pl-12 md:pl-0 shrink-0">
-                <button className="h-11 px-space-md rounded-lg bg-surface-container-lowest text-primary font-body-md-bold text-body-sm hover:bg-surface-container transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-secondary" type="button">
-                  View Linked Report
-                </button>
-                <button className="h-11 px-space-md rounded-lg bg-primary text-on-primary font-body-md-bold text-body-sm hover:bg-primary-container transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-secondary" type="button">
-                  Confirm Same Issue (+1 Upvote)
-                </button>
+                ))}
               </div>
             </div>
-          </aside>
 
-          {/* Page Header & Key Metadata */}
-          <header className="flex flex-col gap-space-md">
-            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-space-md">
-              <div className="flex flex-col gap-space-xs">
-                <div className="flex flex-wrap items-center gap-space-sm">
-                  <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight">#{incident.id}</h1>
+            {/* Photo Card */}
+            <div className="bg-surface rounded-lg border border-border p-6 sm:p-8">
+              <h2 className="text-lg font-bold text-text-primary mb-4">Issue Photo</h2>
+              <div className="bg-background rounded-lg border border-border h-64 flex items-center justify-center">
+                <svg className="w-16 h-16 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+            </div>
 
-                  <button aria-label="Copy Incident ID" className="w-9 h-9 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-secondary" type="button">
-                    <Icon name="content_copy" size="lg" />
+            {/* Map Card */}
+            <div className="bg-surface rounded-lg border border-border p-6 sm:p-8">
+              <h2 className="text-lg font-bold text-text-primary mb-4">Location</h2>
+              <div className="bg-background rounded-lg border border-border h-64 flex items-center justify-center relative">
+                <svg className="w-8 h-8 text-primary absolute" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5z" />
+                </svg>
+              </div>
+              <p className="text-sm text-text-secondary mt-4">
+                <strong>Coordinates:</strong> 17.3850°N, 78.4867°W
+              </p>
+            </div>
+
+            {/* Sources Accordion */}
+            <div className="bg-surface rounded-lg border border-border p-6 sm:p-8">
+              <h2 className="text-lg font-bold text-text-primary mb-6">Cited Sources</h2>
+
+              <div className="space-y-3">
+                {[
+                  {
+                    title: 'FHWA Pavement Management Guide',
+                    excerpt: 'Potholes exceeding 6 inches should be repaired within 48 hours.',
+                  },
+                  {
+                    title: 'Municipal Code § 15-2-1',
+                    excerpt: 'All reported road hazards must be assessed according to severity tier.',
+                  },
+                ].map((source, idx) => (
+                  <details key={idx} className="border border-border rounded-lg overflow-hidden">
+                    <summary className="px-4 py-3 bg-background cursor-pointer font-semibold text-text-primary hover:bg-surface-alt transition-colors flex justify-between items-center">
+                      {source.title}
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                      </svg>
+                    </summary>
+                    <div className="px-4 py-3 bg-surface-alt border-t border-border text-text-secondary text-sm">
+                      <p className="italic mb-3">"{source.excerpt}"</p>
+                      <button className="text-primary hover:text-primary-dark font-semibold text-xs flex items-center gap-1">
+                        View Full Source
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </button>
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Details Panel */}
+            <div className="bg-surface rounded-lg border border-border p-6">
+              <h3 className="text-lg font-bold text-text-primary mb-4">Details</h3>
+
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs font-semibold text-text-tertiary uppercase mb-1">Department</p>
+                  <p className="text-text-primary font-semibold">GHMC Engineering</p>
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold text-text-tertiary uppercase mb-2">Priority Score</p>
+                  <div className="flex items-end gap-1 h-12">
+                    {[...Array(10)].map((_, i) => (
+                      <div
+                        key={i}
+                        className={`flex-1 rounded-t ${i < 8 ? 'bg-primary h-full' : 'bg-border h-1'}`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-sm font-bold text-text-primary mt-1">7.8/10</p>
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold text-text-tertiary uppercase mb-1">SLA Remaining</p>
+                  <p className="text-lg font-bold text-primary">46 hours</p>
+                  <p className="text-xs text-text-secondary">Resolution by Mar 15, 2 PM</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Duplicate Banner */}
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <div className="flex gap-3">
+                <svg className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <div>
+                  <h4 className="font-semibold text-warning text-sm mb-1">Possible Duplicate</h4>
+                  <p className="text-xs text-warning mb-2">Similar report found nearby</p>
+                  <button className="text-xs font-semibold text-warning hover:text-orange-700 transition-colors">
+                    View Report CV-2024-001089 (25m away) →
                   </button>
-
-                  <span className="px-3 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm flex items-center gap-1.5">
-                    <Icon name="warning" size="md" />
-                    {incident.severity}
-                  </span>
-
-                  <span className="px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-secondary animate-ping"></span>
-                    {incident.status}
-                  </span>
                 </div>
-
-                <div className="flex items-center gap-2 text-on-surface-variant mt-1">
-                  <Icon name="maps_ar" size="xl" className="text-primary" />
-                  <span className="font-headline-md text-headline-md text-on-surface font-semibold">
-                    {incident.title}
-                  </span>
-                  <span className="text-outline-variant font-body-sm">•</span>
-                  <span className="font-body-sm text-body-sm text-on-surface-variant">{incident.location}</span>
-                </div>
-              </div>
-
-              {/* Quick Action Buttons */}
-              <div className="flex flex-wrap items-center gap-space-xs shrink-0">
-                <button className="h-11 px-4 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-secondary" type="button">
-                  <Icon name="sms" size="lg" className="text-secondary" />
-                  <span>SMS Updates</span>
-                </button>
-                <button className="h-11 px-4 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-secondary" type="button">
-                  <Icon name="share" size="lg" className="text-primary" />
-                  <span>Share Report</span>
-                </button>
-                <button className="h-11 px-4 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-secondary" type="button">
-                  <Icon name="download" size="lg" className="text-on-surface-variant" />
-                  <span>PDF Summary</span>
-                </button>
               </div>
             </div>
-          </header>
-
-          {/* Main Two-Column Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
-            {/* Left Column: Timeline & Compliance (7 cols) */}
-            <section className="lg:col-span-7 flex flex-col gap-space-lg">
-              {/* Timeline */}
-              <IncidentTimeline events={timelineEvents} />
-
-              {/* Compliance Accordion */}
-              <ComplianceAccordion expandedByDefault="fhwa" regulations={regulationsData} />
-            </section>
-
-            {/* Right Column: Evidence & Metrics (5 cols) */}
-            <aside className="lg:col-span-5 flex flex-col gap-space-lg">
-              {/* Evidence Card */}
-              <div className="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-headline-md text-headline-md text-on-surface">Telemetry & Evidence</h3>
-                  <span className="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container text-on-surface-variant">
-                    Geo-Anchored
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
-                  {/* Photo Evidence */}
-                  <div className="relative rounded-lg overflow-hidden h-48 bg-surface-container flex flex-col justify-end group">
-                    <img
-                      alt="Close up photograph of a severe deep roadway pothole with crumbling asphalt edges on a city transit street"
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2sKrmAiNG5uXPjH3DSNBni1Xd5DVevdq5zQKOvZH5q5tKp6t9nrjstHVnEAhzYMTRmoGtgFsWO7b1LHlhTVG21VINM6_Xj-DOk9cjLxJTfeTApRgs0Vha5S0JKtFo54vvxy2tDMf-2CWtcyFiUzByp4L95j8VWS8KLc6yB9Y1dgFYgUIG0gA9SIHWwJ2BkaHP2d-JawMM3ubKeORsWf4NsN5Z3acl55XYvWsbzRa3rNh4-JL4U2AhFA"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-surface-variant/90 via-transparent to-transparent pointer-events-none"></div>
-                    <div className="relative z-10 p-2 flex flex-col gap-1">
-                      <div className="flex flex-wrap gap-1">
-                        <span className="px-1.5 py-0.5 rounded bg-surface-container-lowest/90 font-label-sm text-[10px] text-on-surface font-semibold backdrop-blur-sm">
-                          12.4 MP EXIF
-                        </span>
-                        <span className="px-1.5 py-0.5 rounded bg-surface-container-lowest/90 font-label-sm text-[10px] text-on-surface font-semibold backdrop-blur-sm">
-                          GPS Authenticated
-                        </span>
-                      </div>
-                      <span className="text-[11px] font-label-sm text-on-surface truncate">
-                        Captured Nov 14, 14:28 EST
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Location Map */}
-                  <div className="relative rounded-lg overflow-hidden h-48 bg-surface-container-high flex flex-col justify-between p-3">
-                    <div className="flex items-center justify-between z-10">
-                      <span className="px-2 py-0.5 rounded bg-surface-container-lowest/90 font-label-sm text-[11px] text-primary font-bold backdrop-blur-sm shadow-sm">
-                        Ward 4 Transit
-                      </span>
-                      <span className="w-6 h-6 rounded bg-surface-container-lowest flex items-center justify-center text-on-surface shadow-sm">
-                        <Icon name="layers" size="lg" />
-                      </span>
-                    </div>
-
-                    {/* Animated Pin Overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="relative flex items-center justify-center">
-                        <span className="w-10 h-10 rounded-full bg-primary/20 animate-ping absolute"></span>
-                        <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-lg relative z-10">
-                          <Icon name="location_on" size="lg" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="z-10 bg-surface-container-lowest/90 backdrop-blur-sm p-1.5 rounded text-left shadow-sm">
-                      <span className="font-label-sm text-[10px] text-on-surface font-mono block">
-                        37.7749° N, -122.4194° W
-                      </span>
-                      <span className="font-label-sm text-[10px] text-on-surface-variant block">
-                        5th Ave & Elm St (Lane 2)
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* SLA & Priority Card */}
-              <div className="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
-                <div className="rounded-lg bg-surface-container-low p-space-md flex flex-col gap-space-sm">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <Icon name="timer" size="xl" className="text-secondary" />
-                      <span className="font-body-md-bold text-body-md-bold text-on-surface">
-                        Municipal SLA Guarantee
-                      </span>
-                    </div>
-                    <span className="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold">
-                      On Track
-                    </span>
-                  </div>
-
-                  <div className="flex items-baseline justify-between pt-1">
-                    <span className="font-headline-xl text-headline-xl text-primary font-bold tracking-tight">
-                      29h : 45m
-                    </span>
-                    <span className="font-label-md text-label-md text-on-surface-variant">
-                      Remaining of 48h Window
-                    </span>
-                  </div>
-
-                  <div className="w-full bg-surface-container h-2.5 rounded-full overflow-hidden mt-1">
-                    <div className="bg-primary h-full rounded-full transition-all duration-500" style={{ width: '38%' }}></div>
-                  </div>
-
-                  <div className="flex items-center justify-between font-label-sm text-[12px] text-on-surface-variant">
-                    <span>Dispatched 18h ago</span>
-                    <span>Deadline: Nov 16, 14:30 EST</span>
-                  </div>
-                </div>
-
-                {/* Triage Score Gauge */}
-                <TriageScoreGauge score={8.4} />
-              </div>
-
-              {/* Department Assignment Card */}
-              <div className="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
-                <div className="flex items-center gap-space-sm">
-                  <div className="w-10 h-10 rounded-lg bg-surface-container-low text-primary flex items-center justify-center shrink-0">
-                    <Icon name="local_shipping" size="xl" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="font-label-sm text-label-sm text-on-surface-variant">
-                      Assigned Municipal Authority
-                    </span>
-                    <span className="font-body-md-bold text-body-md-bold text-on-surface">
-                      DPW — Roadway Maintenance
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-space-sm pt-2">
-                  <div className="bg-surface-container-low p-2.5 rounded-lg flex flex-col">
-                    <span className="font-label-sm text-[11px] text-on-surface-variant">Field Unit</span>
-                    <span className="font-body-md-bold text-body-sm text-on-surface">Ward 4 Crew Bravo</span>
-                  </div>
-                  <div className="bg-surface-container-low p-2.5 rounded-lg flex flex-col">
-                    <span className="font-label-sm text-[11px] text-on-surface-variant">Dispatch ID</span>
-                    <span className="font-body-md-bold text-body-sm text-on-surface">#R-402 (M. Vance)</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm pt-1">
-                  <span className="flex items-center gap-1.5">
-                    <Icon name="phone_in_talk" size="lg" className="text-secondary" />
-                    DPW Hotline: (555) 019-4820
-                  </span>
-                  <span className="font-label-sm text-label-sm text-outline">Open 24/7</span>
-                </div>
-              </div>
-
-              {/* Community Engagement Card */}
-              <div className="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-space-sm">
-                    <div className="flex -space-x-2 overflow-hidden">
-                      <span className="inline-block h-8 w-8 rounded-full ring-2 ring-surface bg-surface-container text-on-surface flex items-center justify-center font-label-sm">
-                        JD
-                      </span>
-                      <span className="inline-block h-8 w-8 rounded-full ring-2 ring-surface bg-surface-container-high text-primary flex items-center justify-center font-label-sm">
-                        EL
-                      </span>
-                      <span className="inline-block h-8 w-8 rounded-full ring-2 ring-surface bg-secondary-container text-on-secondary flex items-center justify-center font-label-sm">
-                        MR
-                      </span>
-                      <span className="inline-block h-8 w-8 rounded-full ring-2 ring-surface bg-primary text-on-primary flex items-center justify-center font-label-sm">
-                        +4
-                      </span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="font-body-md-bold text-body-sm text-on-surface">7 Citizens Confirmed</span>
-                      <span className="font-label-sm text-label-sm text-on-surface-variant">
-                        Nearby residents within 100m
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <button className="w-full h-12 rounded-lg bg-secondary text-on-secondary hover:bg-on-secondary-container font-body-md-bold text-body-md flex items-center justify-center gap-2 transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-secondary" type="button">
-                  <Icon name="thumb_up" size="lg" />
-                  <span>Upvote / Follow this Report (7)</span>
-                </button>
-
-                <p className="font-label-sm text-label-sm text-on-surface-variant text-center">
-                  Subscribed residents receive instantaneous push alerts upon crew work completion and photo release.
-                </p>
-              </div>
-            </aside>
           </div>
         </div>
       </main>
