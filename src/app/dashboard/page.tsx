@@ -2,64 +2,167 @@
 
 import { useState } from 'react';
 import Navbar from '@/components/Navbar';
+import TelemetryAlert from '@/components/dashboard/TelemetryAlert';
+import PriorityDispatchStream from '@/components/dashboard/PriorityDispatchStream';
+import OperationalQueueTable from '@/components/dashboard/OperationalQueueTable';
+import DashboardFilters from '@/components/dashboard/DashboardFilters';
+import KPICards from '@/components/dashboard/KPICards';
 
 export default function DashboardPage() {
   const [viewMode, setViewMode] = useState<'table' | 'card'>('card');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [severityFilter, setSeverityFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('priority');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
+  const [showComplianceModal, setShowComplianceModal] = useState(false);
+  const [selectedCompliance, setSelectedCompliance] = useState<any>(null);
 
   const kpis = [
-    { label: 'Total Reports', value: '1,247', icon: 'report' },
-    { label: 'Open', value: '89', icon: 'open', color: 'status-open' },
-    { label: 'Critical', value: '12', icon: 'alert', color: 'severity-critical' },
-    { label: 'Resolved Today', value: '24', icon: 'check', color: 'status-resolved' },
+    { label: 'Total Reports', value: '1,248', trend: '+14%', trendPeriod: 'vs last week', icon: 'inbox' },
+    { label: 'Open / In Queue', value: '84', subtext: '38 awaiting inspection, 46 dispatched', icon: 'pending_actions' },
+    { label: 'Critical Hazards', value: '12', subtext: '3 within 2h of SLA deadline', icon: 'priority_high' },
+    { label: 'Resolved Today', value: '47', subtext: '↑ +9 above daily quota, 98.2% photo verified', icon: 'task_alt' },
   ];
 
-  const incidents = [
+  // Priority dispatch stream incidents
+  const priorityIncidents = [
     {
-      id: 'CV-2024-001234',
-      type: 'Pothole',
-      severity: 'high',
-      priority: 7.8,
-      location: 'Main Street & 5th Ave',
-      time: '2 hours ago',
-      status: 'in_review',
-      duplicates: 1,
-    },
-    {
-      id: 'CV-2024-001233',
-      type: 'Garbage Dump',
-      severity: 'medium',
-      priority: 5.2,
-      location: 'Park Lane',
-      time: '4 hours ago',
-      status: 'open',
-      duplicates: 0,
-    },
-    {
-      id: 'CV-2024-001232',
-      type: 'Sewer Overflow',
+      id: 'CV-2024-9182',
+      type: 'Deep Roadway Pothole (Grade 3)',
       severity: 'critical',
-      priority: 9.1,
-      location: 'Elm Street',
-      time: '6 hours ago',
-      status: 'resolved',
-      duplicates: 2,
+      priority: 8.4,
+      location: '5th Ave & Elm St',
+      ward: 'Ward 4 Transit Corridor',
+      time: '18 mins ago',
+      timestamp: '14:28 EST',
+      status: 'in_progress',
+      photos: 1,
+      gps: '41.8781°N, 87.6298°W',
+      duplicateId: 'CV-2024-9179',
+      duplicateDistance: 18,
+      assignedCrew: 'DPW Ward 4 Crew Bravo',
+      assignedLead: 'M. Vance',
+      citations: [
+        {
+          title: 'FHWA Pothole Severity Index § 4.2',
+          code: 'Code P-2',
+          excerpt: 'Depressions exceeding 2 inches in depth located directly within vehicular wheel paths mandate priority dispatch code P-2 within 48 hours.',
+        },
+        {
+          title: 'Municipal Infrastructure Code § 14-802',
+          code: 'Transit Route',
+          excerpt: 'Cavities occurring on designated transit corridors receive accelerated priority weighting.',
+        },
+      ],
+    },
+    {
+      id: 'CV-2024-9190',
+      type: 'Storm Drain Backflow & Flooding',
+      severity: 'critical',
+      priority: 9.2,
+      location: 'Cloverly Blvd & 12th Way',
+      ward: 'Ward 4 Underpass',
+      time: '42 mins ago',
+      timestamp: '14:04 EST',
+      status: 'open',
+      photos: 0,
+      gps: 'Sensor ID: ST-W4-09',
+      slaBreachIn: '1h 18m',
+      slaTier: 'Drainage Tier 1',
+      citations: [
+        {
+          title: 'Clean Water Act Municipal Sec. 402(p)',
+          excerpt: 'Runoff discharge obstructions in grade separation subways necessitate rapid mitigation to avert toxic vehicular contamination runoff.',
+        },
+      ],
+    },
+    {
+      id: 'CV-2024-9165',
+      type: 'Streetlight Luminaire Circuit Outage',
+      severity: 'medium',
+      priority: 6.1,
+      location: 'Park Ave & 9th St Crosswalk',
+      ward: 'Ward 4 Crosswalk',
+      time: '2 hours ago',
+      timestamp: '12:45 EST',
+      status: 'in_review',
+      photos: 1,
+      notes: 'Automatic photocell sensor failure suspected across 3 adjacent mast arms. Crosswalk safety beacon remains operational.',
+      assignedDivision: 'Division of Street Lighting',
+      assignedInspector: 'Inspector Assigned',
+      citations: [
+        {
+          title: 'Municipal Code: § 22-108',
+          code: 'Pedestrian Visibility Zone',
+        },
+      ],
     },
   ];
 
-  const severityColor = (severity: string) => ({
-    low: 'bg-green-100 text-severity-low',
-    medium: 'bg-amber-100 text-severity-medium',
-    high: 'bg-orange-100 text-severity-high',
-    critical: 'bg-red-100 text-severity-critical',
-  })[severity] || '';
-
-  const statusColor = (status: string) => ({
-    open: 'bg-blue-100 text-status-open',
-    in_review: 'bg-purple-100 text-status-review',
-    resolved: 'bg-green-100 text-status-resolved',
-  })[status] || '';
+  const operationalQueue = [
+    {
+      id: 'CV-2024-9182',
+      type: 'Deep Roadway Pothole (Grade 3)',
+      severity: 'critical',
+      priority: 8.4,
+      location: '5th Ave & Elm St',
+      ward: 'Ward 4 (Transit Corridor)',
+      time: '18m ago (14:28 EST)',
+      status: 'in_progress',
+      citations: 2,
+      duplicateFlag: 'CV-9179',
+    },
+    {
+      id: 'CV-2024-9190',
+      type: 'Storm Drain Backflow & Flooding',
+      severity: 'critical',
+      priority: 9.2,
+      location: 'Cloverly Blvd & 12th Way',
+      ward: 'Ward 4 Underpass',
+      time: '42m ago (14:04 EST)',
+      status: 'open',
+      citations: 1,
+      duplicateFlag: null,
+    },
+    {
+      id: 'CV-2024-9165',
+      type: 'Streetlight Luminaire Circuit Outage',
+      severity: 'medium',
+      priority: 6.1,
+      location: 'Park Ave & 9th St',
+      ward: 'Ward 4 Crosswalk',
+      time: '2h ago (12:45 EST)',
+      status: 'in_review',
+      citations: 1,
+      duplicateFlag: null,
+    },
+    {
+      id: 'CV-2024-9154',
+      type: 'Traffic Signal Timing Desynchronization',
+      severity: 'high',
+      priority: 7.5,
+      location: 'Grand Ave & Central Expressway',
+      ward: 'Ward 4 Interchange',
+      time: '3h 10m ago',
+      status: 'in_review',
+      citations: 1,
+      duplicateFlag: null,
+    },
+    {
+      id: 'CV-2024-9140',
+      type: 'Commercial Waste Container Spillage',
+      severity: 'low',
+      priority: 3.8,
+      location: 'Market Alley & 3rd St',
+      ward: 'Ward 4 Commercial',
+      time: '4h 35m ago',
+      status: 'dispatched',
+      citations: 1,
+      duplicateFlag: null,
+    },
+  ];
 
   return (
     <div className="bg-background min-h-screen">
@@ -71,12 +174,18 @@ export default function DashboardPage() {
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}>
           <nav className="p-6 space-y-2">
-            {['Overview', 'Incidents', 'Map', 'Settings'].map((item) => (
+            {[
+              { label: 'Dashboard', icon: '📊' },
+              { label: 'Incidents', icon: '📋' },
+              { label: 'Map', icon: '🗺️' },
+              { label: 'Settings', icon: '⚙️' },
+            ].map((item) => (
               <button
-                key={item}
-                className="w-full text-left px-4 py-2.5 rounded-lg font-semibold text-text-secondary hover:text-primary hover:bg-surface-alt transition-colors"
+                key={item.label}
+                className="w-full text-left px-4 py-2.5 rounded-lg font-semibold text-text-secondary hover:text-primary hover:bg-surface-alt transition-colors flex items-center gap-3"
               >
-                {item}
+                <span>{item.icon}</span>
+                <span>{item.label}</span>
               </button>
             ))}
           </nav>
@@ -86,10 +195,10 @@ export default function DashboardPage() {
         <div className="flex-1">
           <main className="p-4 sm:p-6 lg:p-8">
             {/* Header */}
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex justify-between items-start mb-8">
               <div>
-                <h1 className="text-3xl sm:text-4xl font-bold text-text-primary">Dashboard</h1>
-                <p className="text-text-secondary mt-1">Manage civic reports and track resolution progress</p>
+                <h1 className="text-3xl sm:text-4xl font-bold text-text-primary">Incident Triage & Dispatch Console</h1>
+                <p className="text-text-secondary mt-1">Live telemetric queue for Ward 4 Public Works & Infrastructure Dispatch. 28 active work orders in flight across municipal thoroughfares.</p>
               </div>
 
               {/* Toggle Sidebar Button */}
@@ -103,182 +212,158 @@ export default function DashboardPage() {
               </button>
             </div>
 
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              {kpis.map((kpi) => (
-                <div key={kpi.label} className="bg-surface rounded-lg border border-border p-6">
-                  <p className="text-text-secondary text-sm font-semibold mb-2">{kpi.label}</p>
-                  <p className="text-3xl font-bold text-text-primary">{kpi.value}</p>
-                </div>
-              ))}
-            </div>
+            {/* Telemetry Alert */}
+            {!isOnline && <TelemetryAlert onRetry={() => setIsOnline(true)} />}
 
-            {/* Filters */}
-            <div className="bg-surface rounded-lg border border-border p-4 sm:p-6 mb-8">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                {/* Status Tabs */}
-                <div className="flex gap-2 flex-wrap">
-                  {['all', 'open', 'in_review', 'resolved'].map((status) => (
-                    <button
-                      key={status}
-                      onClick={() => setStatusFilter(status)}
-                      className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
-                        statusFilter === status
-                          ? 'bg-primary text-white'
-                          : 'bg-surface-alt text-text-secondary hover:text-primary'
-                      }`}
-                    >
-                      {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Severity Dropdown */}
-                <select className="px-4 py-2 border border-border rounded-lg text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                  <option>All Severity</option>
-                  <option>Low</option>
-                  <option>Medium</option>
-                  <option>High</option>
-                  <option>Critical</option>
-                </select>
-
-                {/* Search */}
-                <input
-                  type="text"
-                  placeholder="Search reports..."
-                  className="flex-1 px-4 py-2 border border-border rounded-lg text-text-primary placeholder-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                />
-
-                {/* View Toggle */}
-                <div className="flex gap-2 ml-auto">
-                  <button
-                    onClick={() => setViewMode('card')}
-                    className={`p-2 rounded-lg transition-colors ${viewMode === 'card' ? 'bg-primary text-white' : 'bg-surface-alt text-text-secondary'}`}
-                  >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => setViewMode('table')}
-                    className={`p-2 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-primary text-white' : 'bg-surface-alt text-text-secondary'}`}
-                  >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6z" />
-                    </svg>
-                  </button>
-                </div>
+            {/* Live Sync Status */}
+            <div className="bg-surface-alt rounded-lg border border-border p-4 mb-8 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-status-resolved rounded-full animate-pulse" />
+                <span className="text-sm font-semibold text-text-secondary">Live Sync (Online, 4s ago)</span>
+              </div>
+              <div className="flex gap-2">
+                <button className="px-4 py-2 text-sm font-semibold text-text-secondary hover:text-primary transition-colors flex items-center gap-2">
+                  📥 Export CSV / GIS
+                </button>
+                <button className="px-4 py-2 text-sm font-semibold text-text-secondary hover:text-primary transition-colors flex items-center gap-2">
+                  ⊕ + Manual Incident Entry
+                </button>
               </div>
             </div>
 
-            {/* Card View */}
-            {viewMode === 'card' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {incidents.map((incident) => (
-                  <div key={incident.id} className="bg-surface rounded-lg border border-border overflow-hidden hover:shadow-lg transition-shadow">
-                    {/* Thumbnail */}
-                    <div className="w-full h-40 bg-background border-b border-border flex items-center justify-center">
-                      <svg className="w-12 h-12 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
+            {/* KPI Cards */}
+            <KPICards kpis={kpis} />
 
-                    {/* Content */}
-                    <div className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h3 className="font-bold text-text-primary">{incident.type}</h3>
-                          <p className="text-xs text-text-tertiary">{incident.id}</p>
-                        </div>
-                        <span className={`px-2 py-1 rounded text-xs font-semibold ${severityColor(incident.severity)}`}>
-                          {incident.severity.charAt(0).toUpperCase() + incident.severity.slice(1)}
-                        </span>
-                      </div>
-
-                      <p className="text-sm text-text-secondary mb-3">{incident.location}</p>
-
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs text-text-tertiary">{incident.time}</span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${statusColor(incident.status)}`}>
-                          {incident.status.replace('_', ' ')}
-                        </span>
-                      </div>
-
-                      {incident.duplicates > 0 && (
-                        <div className="bg-amber-50 border border-amber-200 rounded px-2 py-1 mb-3">
-                          <p className="text-xs text-warning font-semibold">
-                            ⚠ {incident.duplicates} Possible Duplicate{incident.duplicates > 1 ? 's' : ''}
-                          </p>
-                        </div>
-                      )}
-
-                      <div className="flex gap-2 pt-3 border-t border-border">
-                        <button className="flex-1 px-3 py-2 bg-primary text-white rounded text-sm font-semibold hover:bg-primary-dark transition-colors">
-                          View
-                        </button>
-                        <button className="flex-1 px-3 py-2 bg-surface-alt text-text-primary rounded text-sm font-semibold hover:bg-background transition-colors">
-                          Assign
-                        </button>
-                      </div>
-                    </div>
+            {/* Summary Stats */}
+            <div className="bg-surface rounded-lg border border-border p-6 mb-8">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { label: 'All Reports', value: '1,248' },
+                  { label: 'Open Dispatches', value: '84' },
+                  { label: 'In Review / Engineering', value: '32' },
+                  { label: 'Resolved', value: '1,132' },
+                ].map((stat) => (
+                  <div key={stat.label} className="text-center">
+                    <p className="text-2xl font-bold text-primary">{stat.value}</p>
+                    <p className="text-xs text-text-secondary mt-1">{stat.label}</p>
                   </div>
                 ))}
               </div>
-            )}
+            </div>
 
-            {/* Table View */}
-            {viewMode === 'table' && (
-              <div className="bg-surface rounded-lg border border-border overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-surface-alt border-b border-border">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-text-primary">Report</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-text-primary">Severity</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-text-primary">Priority</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-text-primary">Status</th>
-                      <th className="px-6 py-3 text-right text-sm font-semibold text-text-primary">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {incidents.map((incident) => (
-                      <tr key={incident.id} className="hover:bg-surface-alt transition-colors">
-                        <td className="px-6 py-4">
-                          <div>
-                            <p className="font-semibold text-text-primary">{incident.type}</p>
-                            <p className="text-xs text-text-tertiary">{incident.id}</p>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded text-xs font-semibold ${severityColor(incident.severity)}`}>
-                            {incident.severity.charAt(0).toUpperCase() + incident.severity.slice(1)}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-end gap-1 w-12">
-                            {[...Array(10)].map((_, i) => (
-                              <div
-                                key={i}
-                                className={`flex-1 rounded-t h-4 ${i < Math.ceil(incident.priority) ? 'bg-primary' : 'bg-border'}`}
-                              />
-                            ))}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor(incident.status)}`}>
-                            {incident.status.replace('_', ' ')}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <button className="text-primary hover:text-primary-dark font-semibold text-sm">
-                            ⋮
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {/* View and Filter Controls */}
+            <div className="bg-surface rounded-lg border border-border p-4 sm:p-6 mb-8">
+              <div className="flex flex-col gap-4 mb-6">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <h2 className="text-lg font-bold text-text-primary">Priority Dispatch Stream</h2>
+                  <button className="text-xs font-semibold text-text-secondary hover:text-primary transition-colors">
+                    3 Highlighted Orders
+                  </button>
+                </div>
+                <p className="text-sm text-text-secondary">Real-time telemetric updates active</p>
               </div>
-            )}
+
+              {/* Filters */}
+              <DashboardFilters
+                statusFilter={statusFilter}
+                severityFilter={severityFilter}
+                categoryFilter={categoryFilter}
+                sortBy={sortBy}
+                onStatusChange={setStatusFilter}
+                onSeverityChange={setSeverityFilter}
+                onCategoryChange={setCategoryFilter}
+                onSortChange={setSortBy}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+              />
+            </div>
+
+            {/* Priority Dispatch Stream */}
+            <PriorityDispatchStream 
+              incidents={priorityIncidents}
+              onComplianceClick={(compliance) => {
+                setSelectedCompliance(compliance);
+                setShowComplianceModal(true);
+              }}
+            />
+
+            {/* Operational Queue Section */}
+            <div className="bg-surface rounded-lg border border-border p-6 mt-8">
+              <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+                <h2 className="text-lg font-bold text-text-primary">Operational Queue Table</h2>
+                <div className="flex gap-2 flex-wrap">
+                  <button className="px-3 py-1 text-xs font-semibold text-text-secondary hover:text-primary transition-colors">
+                    📋 Columns
+                  </button>
+                  <button className="px-3 py-1 text-xs font-semibold text-text-secondary hover:text-primary transition-colors">
+                    🖨️ Print Manifest
+                  </button>
+                </div>
+              </div>
+
+              {/* Table View */}
+              <OperationalQueueTable incidents={operationalQueue} />
+
+              {/* Pagination */}
+              <div className="mt-6 flex items-center justify-center gap-2">
+                <button className="px-2 py-1 text-sm font-semibold text-text-secondary hover:text-primary transition-colors">
+                  ◀
+                </button>
+                {[1, 2, 3, '...', 17].map((page) => (
+                  <button
+                    key={page}
+                    className={`px-3 py-1 text-sm font-semibold rounded transition-colors ${
+                      page === 1 ? 'bg-primary text-white' : 'text-text-secondary hover:text-primary'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button className="px-2 py-1 text-sm font-semibold text-text-secondary hover:text-primary transition-colors">
+                  ▶
+                </button>
+              </div>
+            </div>
+
+            {/* Developer Mode Section */}
+            <details className="bg-surface rounded-lg border border-border p-6 mt-8">
+              <summary className="text-lg font-bold text-text-primary cursor-pointer">
+                👨‍💻 Municipal Edge State Demonstrations
+              </summary>
+              <div className="mt-4 space-y-4">
+                <details className="bg-surface-alt rounded p-4">
+                  <summary className="font-semibold text-text-primary cursor-pointer">
+                    ⏳ Loading Skeleton State (Low-Bandwidth Telemetry)
+                  </summary>
+                  <p className="text-sm text-text-secondary mt-2">
+                    Pulsing geometry states matching UI components during offline buffering or dispatch network latency.
+                  </p>
+                </details>
+                <details className="bg-surface-alt rounded p-4">
+                  <summary className="font-semibold text-text-primary cursor-pointer">
+                    📦 Queue Cleared / Empty Filter State
+                  </summary>
+                  <div className="mt-2 text-center py-8">
+                    <p className="text-xl font-bold text-text-primary">All Clear</p>
+                    <p className="text-sm text-text-secondary mt-2">
+                      No reports in this filter queue
+                    </p>
+                    <p className="text-xs text-text-tertiary mt-2">
+                      All citizen submissions in Ward 4 have been triaged and assigned to maintenance crews. New reports will appear here automatically via live dispatch sync.
+                    </p>
+                    <button className="mt-4 px-4 py-2 text-sm font-semibold text-primary hover:text-primary-dark transition-colors">
+                      Reset Filters
+                    </button>
+                    <button className="ml-2 px-4 py-2 text-sm font-semibold text-primary hover:text-primary-dark transition-colors">
+                      🔄 Refresh Telemetry Stream
+                    </button>
+                  </div>
+                  <p className="text-xs text-text-tertiary mt-4">
+                    Automatic heartbeat polling: active every 15s
+                  </p>
+                </details>
+              </div>
+            </details>
           </main>
         </div>
       </div>
