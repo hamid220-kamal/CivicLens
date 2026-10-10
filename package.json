@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:connections": "node scripts/test-connections.mjs"
+    "test:connections": "node scripts/test-connections.mjs",
+    "test:backend": "node scripts/test-backend.mjs",
+    "test:backend:live": "node scripts/test-backend.mjs --live",
+    "test:e2e": "node scripts/test-e2e-analyze.mjs",
+    "seed:knowledge": "node scripts/seed-knowledge.mjs"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",

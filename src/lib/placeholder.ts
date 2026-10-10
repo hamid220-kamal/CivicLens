@@ -39,8 +39,8 @@ export const processSteps = [
     id: 3,
     icon: 'psychology',
     title: 'AI Triage & Codes',
-    description: 'Autonomous image classification tags severity tiers against local DPW municipal repair codes.',
-    cta: 'FHWA Compliant',
+    description: 'Autonomous image classification tags severity tiers against local municipal repair codes.',
+    cta: 'Charter Grounded (Demo)',
     iconBg: 'bg-tertiary-fixed',
     iconColor: 'text-tertiary',
   },
@@ -56,15 +56,29 @@ export const processSteps = [
 ];
 
 export const trustBadges = [
-  { emoji: '🏛️', label: 'FHWA', description: 'Pothole Severity Index' },
-  { emoji: '📐', label: 'AASHTO', description: 'Roadway Maintenance Standards' },
-  { emoji: '🔒', label: 'CJIS-Ready', description: 'Data & Encryption Protocol' },
+  { emoji: '🏛️', label: 'GHMC Charter', description: 'Municipal Service Delivery Standards' },
+  { emoji: '📐', label: 'Municipal Norms', description: 'Roadway Maintenance Standards' },
+  { emoji: '🔒', label: 'Encrypted Vault', description: 'Secure Storage Protocol' },
   { emoji: '♿', label: 'WCAG 2.1 AA', description: 'Certified Public Accessibility' },
-  { emoji: '🌐', label: 'Open311', description: 'Protocol Compliant API' },
-  { emoji: '📋', label: 'Ward 4 DPW', description: 'Service Level Agreement' },
+  { emoji: '🌐', label: 'Open311 Format', description: 'Standard Civic Data Protocol' },
+  { emoji: '📋', label: 'GHMC Ward Wing', description: 'Service Level Agreement' },
 ];
 
-export const incidentsData = [
+export interface IncidentItem {
+  id: string;
+  status: 'resolved' | 'inprogress' | 'dispatched';
+  statusLabel: string;
+  location: string;
+  title: string;
+  description: string;
+  timestamp: string;
+  footer: string;
+  footerColor: string;
+  imageUrl: string;
+  imageAlt: string;
+}
+
+export const incidentsData: IncidentItem[] = [
   {
     id: 'CV-8491',
     status: 'resolved',
