@@ -131,3 +131,105 @@ export const footerLinks = {
     { label: 'Accessibility', path: '/accessibility' },
   ],
 };
+
+/**
+ * TRACK INCIDENT PAGE DATA
+ * Post-submission incident status tracking
+ */
+
+export const incidentTrackingData = {
+  id: 'CV-2024-9182',
+  severity: 'High Severity',
+  status: 'In Progress',
+  title: 'Deep Roadway Pothole (Grade 3)',
+  location: 'Ward 4 Transit Corridor',
+  reportedAt: 'Nov 14, 2024 • 14:28 EST',
+  duplicateWarning: {
+    linkedId: 'CV-2024-9179',
+    distance: '18m',
+    street: '5th Ave & Elm St',
+  },
+};
+
+export const timelineEvents = [
+  {
+    id: 1,
+    status: 'completed' as const,
+    title: '1. Submitted & Verified',
+    timestamp: 'Nov 14, 2024 • 14:28 EST',
+    description:
+      'Logged via CivicLens Resident App by Verified Citizen (GPS ±2.4m precision verified, EXIF hardware cryptographic stamp validated).',
+    metadata: [{ label: 'SHA256', value: 'e8b9...4912' }],
+  },
+  {
+    id: 2,
+    status: 'completed' as const,
+    title: '2. Under Review & AI Triaged',
+    timestamp: 'Nov 14, 2024 • 14:32 EST',
+    description:
+      'Automated computer vision classified scene as Grade 3 Asphalt Cavity (3.4" depth estimate). Calculated dynamic Priority Score 8.4/10 based on arterial transit weight.',
+    metadata: [{ label: 'Confidence Score', value: '98.4%' }],
+  },
+  {
+    id: 3,
+    status: 'completed' as const,
+    title: '3. Work Order Assigned',
+    timestamp: 'Nov 14, 2024 • 15:10 EST',
+    description:
+      'Assigned to Department of Public Works — Roadway Maintenance Division. Dispatched to Ward 4 Field Crew Bravo under Lead Dispatcher Marcus Vance (Radio ID #R-402).',
+  },
+  {
+    id: 4,
+    status: 'active' as const,
+    title: '4. In Progress (Active Repair)',
+    timestamp: 'Nov 15, 2024 • 08:45 EST',
+    description:
+      'Repair crew Bravo on-site with cold-lay asphalt milling truck and asphalt compactor. Pavement excavation and debris clearance commenced.',
+    details:
+      'Traffic cone safety lane closure established on Ward 4 Transit Corridor. Square perimeter saw-cutting underway to prepare clean base aggregate.',
+  },
+  {
+    id: 5,
+    status: 'pending' as const,
+    title: '5. Resolution & Photographic Verification',
+    timestamp: 'Estimated: Nov 16, 2024 • 14:30 EST',
+    description:
+      'Target milestone: Pothole backfilled with asphalt emulsion, double-roller compacted, and final laser depth survey conducted. High-resolution closure photo will be attached to ticket.',
+  },
+];
+
+export const regulationsData = [
+  {
+    id: 'fhwa',
+    title: 'FHWA Pothole Severity Index § 4.2',
+    agency: 'Federal Highway Administration & City DOT',
+    description:
+      'Federal standard for municipal roadway pothole triage and mandatory response timelines.',
+    fullText:
+      'Depressions exceeding 2 inches in depth located within vehicular wheel paths mandate priority dispatch code P-2 within 48 hours to avert structural sub-base deterioration and tire blowout incidents on designated municipal corridors.',
+    tier: 'strict' as const,
+    externalLink: 'https://www.fhwa.dot.gov',
+  },
+  {
+    id: 'municipal',
+    title: 'Municipal Infrastructure Code § 14-802',
+    agency: 'City Public Works Standard Operating Procedure',
+    description:
+      'Local ordinance for accelerated transit corridor repair prioritization.',
+    fullText:
+      'Accelerated Public Transit Corridor SLA Weighting (+1.5 priority multiplier): Street segments hosting active public transit routes receive elevated priority ranking to avoid bus suspension damage and commuter scheduling disruptions.',
+    tier: 'standard' as const,
+    externalLink: 'https://municipal.gov/code',
+  },
+  {
+    id: 'aashto',
+    title: 'AASHTO R 26-01 Distress Criteria',
+    agency: 'American Association of State Highway & Transportation Officials',
+    description:
+      'Standard criteria for asphalt degradation mapping and patching volume calculations.',
+    fullText:
+      'Classifies bowl-shaped cavities based on diameter-to-depth ratios and determines hot-mix asphalt patching volume requirements for structural restoration compliance.',
+    tier: 'advisory' as const,
+    externalLink: 'https://www.aashto.org',
+  },
+];
