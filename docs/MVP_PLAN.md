@@ -91,14 +91,14 @@ Processes image + location + optional description. Retrieves relevant civic know
     "severity": "high",
     "priorityScore": 8.5,
     "department": "GHMC Engineering Wing (Roads)",
-    "slaHours": 48,
+    "slaHours": 360,
     "aiReason": "Large asphalt cavity visible with high traffic risk.",
     "citations": [
       {
-        "sourceTitle": "GHMC Citizen Charter & Service Delivery Guidelines",
-        "publisher": "Greater Hyderabad Municipal Corporation",
-        "sourceUrl": "https://www.ghmc.gov.in",
-        "excerpt": "Potholes and road surface damage on municipal roads fall under the GHMC Engineering Wing (Roads). Standard repair SLA is 48 hours."
+        "sourceTitle": "GHMC Citizen Charter — Road Maintenance & Potholes",
+        "publisher": "Greater Hyderabad Municipal Corporation (GHMC)",
+        "sourceUrl": "https://ghmc.gov.in/CitizenCharter/CitizenCharter-19.06.pdf",
+        "excerpt": "As per Item 1 (Engineering Wing) of the official GHMC Citizen Charter, the stipulated timeframe for 'Filling of potholes / repair of road surface' is 15 days (360 hours)."
       }
     ]
   }
@@ -114,8 +114,8 @@ Processes image + location + optional description. Retrieves relevant civic know
     "severity": "medium",
     "priorityScore": 5.0,
     "department": "General Municipal Review",
-    "slaHours": 72,
-    "aiReason": "No specific citizen charter standard found for this issue type.",
+    "slaHours": null,
+    "aiReason": "No authenticated municipal charter standard matched this issue type. Manual staff review required.",
     "citations": []
   }
 }
@@ -210,7 +210,7 @@ Compares a new report against existing open incidents within spatial proximity (
 ## 5. End-to-End Acceptance Checklist (Demo Ready)
 
 - [ ] **Test 1**: Citizen uploads a real photo of a road defect + GPS.
-- [ ] **Test 2**: AI returns `Pothole`, `GHMC Engineering Wing (Roads)`, and 48hr SLA.
+- [ ] **Test 2**: AI returns `Pothole`, `GHMC Engineering Wing (Roads)`, and 15-day (360h) charter SLA.
 - [ ] **Test 3**: UI displays the official GHMC citizen charter citation with working source link.
 - [ ] **Test 4**: Submitting a second report nearby links to the same incident (`report_count = 2`).
 - [ ] **Test 5**: Authority dashboard reflects updated priority score and linked reports.

@@ -40,47 +40,38 @@ async function seedKnowledge() {
   const rawSeeds = JSON.parse(readFileSync(seedsPath, "utf-8"));
   console.log(`Found ${rawSeeds.length} authentic Hyderabad civic standards to seed.\n`);
 
+  // Clean obsolete unverified or legacy seed records
+  const validTitles = rawSeeds.map((s) => s.source_title);
+  const { error: cleanErr } = await supabase
+    .from("knowledge_chunks")
+    .delete()
+    .not("source_title", "in", `(${validTitles.map((t) => `"${t}"`).join(",")})`);
+
+  if (!cleanErr) {
+    console.log("🧹 Cleaned obsolete legacy records from knowledge_chunks.");
+  }
+
   for (const item of rawSeeds) {
-    const { data, error } = await supabase.from("knowledge_chunks").upsert(
-      {
-        source_title: item.source_title,
-        source_publisher: item.source_publisher,
-        source_url: item.source_url,
-        category: item.category,
-        department: item.department,
-        sla_hours: item.sla_hours,
-        keywords: item.keywords,
-        content: item.content,
-        metadata: {
-          verification_status: item.verification_status || "verified_public_charter",
-          retrieval_date: item.retrieval_date || "2026-10-10",
-        },
+    // Delete existing duplicate rows with the same title to ensure exactly 1 row per standard
+    await supabase.from("knowledge_chunks").delete().eq("source_title", item.source_title);
+
+    const { error: insertErr } = await supabase.from("knowledge_chunks").insert({
+      source_title: item.source_title,
+      source_publisher: item.source_publisher,
+      source_url: item.source_url,
+      category: item.category,
+      department: item.department,
+      sla_hours: item.sla_hours,
+      keywords: item.keywords,
+      content: item.content,
+      metadata: {
+        verification_status: item.verification_status || "verified_official_charter",
+        retrieval_date: item.retrieval_date || "2026-10-10",
       },
-      { onConflict: "source_title" }
-    );
+    });
 
-    if (error) {
-      // If table doesn't have unique constraint on source_title, do insert
-      const { error: insertErr } = await supabase.from("knowledge_chunks").insert({
-        source_title: item.source_title,
-        source_publisher: item.source_publisher,
-        source_url: item.source_url,
-        category: item.category,
-        department: item.department,
-        sla_hours: item.sla_hours,
-        keywords: item.keywords,
-        content: item.content,
-        metadata: {
-          verification_status: item.verification_status || "verified_public_charter",
-          retrieval_date: item.retrieval_date || "2026-10-10",
-        },
-      });
-
-      if (insertErr && !insertErr.message.includes("duplicate")) {
-        console.warn(`⚠️ Notice for "${item.source_title}": ${insertErr.message}`);
-      } else {
-        console.log(`✅ Seeded [${item.verification_status}]: ${item.source_title} -> ${item.department}`);
-      }
+    if (insertErr) {
+      console.warn(`⚠️ Notice for "${item.source_title}": ${insertErr.message}`);
     } else {
       console.log(`✅ Seeded [${item.verification_status}]: ${item.source_title} -> ${item.department}`);
     }

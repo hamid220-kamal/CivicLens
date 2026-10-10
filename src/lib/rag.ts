@@ -94,10 +94,20 @@ export async function retrieveCivicGuidance(
     const supabase = getSupabaseServerClient();
     const { data: chunks, error } = await supabase
       .from("knowledge_chunks")
-      .select("source_title, source_publisher, source_url, content, department, sla_hours, category, keywords");
+      .select("source_title, source_publisher, source_url, content, department, sla_hours, category, keywords, metadata");
 
     if (!error && chunks && chunks.length > 0) {
-      candidateChunks = chunks as KnowledgeSeedItem[];
+      candidateChunks = (chunks as any[]).map((c) => ({
+        source_title: c.source_title,
+        source_publisher: c.source_publisher,
+        source_url: c.source_url,
+        content: c.content,
+        department: c.department,
+        sla_hours: typeof c.sla_hours === "number" ? c.sla_hours : undefined,
+        category: c.category,
+        keywords: Array.isArray(c.keywords) ? c.keywords : [],
+        verification_status: c.metadata?.verification_status || c.verification_status,
+      }));
     }
   } catch (err) {
     console.warn("Notice: Querying knowledge_chunks database table encountered:", (err as Error).message);
@@ -142,13 +152,18 @@ export async function retrieveCivicGuidance(
   }));
 
   const bestChunk = topMatch.chunk;
+  const isVerifiedCharter = bestChunk.verification_status === "verified_official_charter";
+
+  const reasonText = isVerifiedCharter
+    ? `Recommended based on ${bestChunk.source_title} (${bestChunk.source_publisher})`
+    : `Advisory recommendation based on ${bestChunk.source_title}; operational guidelines apply without statutory SLA`;
 
   return {
     evidence,
     recommendedDepartment: {
       name: bestChunk.department || "unknown",
-      reason: `Recommended based on ${bestChunk.source_title} (${bestChunk.source_publisher})`,
-      sla_hours: typeof bestChunk.sla_hours === "number" ? bestChunk.sla_hours : undefined,
+      reason: reasonText,
+      sla_hours: isVerifiedCharter && typeof bestChunk.sla_hours === "number" ? bestChunk.sla_hours : undefined,
     },
   };
 }

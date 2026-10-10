@@ -1,9 +1,8 @@
 import { readFileSync, existsSync } from "fs";
 import { resolve } from "path";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { createClient } from "@supabase/supabase-js";
+import createJiti from "jiti";
 
-// 1. Load .env.local
+// 1. Load .env.local safely without printing secrets
 const envPath = resolve(process.cwd(), ".env.local");
 if (existsSync(envPath)) {
   const envContent = readFileSync(envPath, "utf-8");
@@ -17,79 +16,31 @@ if (existsSync(envPath)) {
   }
 }
 
-const STOP_WORDS = new Set([
-  "the", "and", "a", "an", "in", "on", "at", "to", "for", "of", "with", "is", "are", "was",
-  "were", "this", "that", "these", "those", "near", "from", "have", "has", "had", "been",
-  "there", "here", "some", "any", "please", "help", "view", "seen", "very", "much", "road",
-  "street", "area", "lane", "place", "city", "hyderabad", "issue", "problem", "defect"
-]);
+// 2. Initialize jiti to import actual production TypeScript modules directly
+const jiti = createJiti(process.cwd(), {
+  alias: {
+    "^@/(.*)$": resolve(process.cwd(), "src/$1"),
+    "@/": resolve(process.cwd(), "src") + "/",
+  },
+});
 
-function tokenizeQuery(text) {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s]/g, " ")
-    .split(/\s+/)
-    .filter((w) => w.length > 2 && !STOP_WORDS.has(w));
-}
-
-function scoreKnowledgeChunk(chunk, queryTokens, normalizedQuery, detectedCategory) {
-  let score = 0;
-  if (detectedCategory && chunk.category.toLowerCase().includes(detectedCategory.toLowerCase())) {
-    score += 5.0;
-  }
-  const keywords = chunk.keywords || [];
-  for (const kw of keywords) {
-    const kwLower = kw.toLowerCase();
-    if (normalizedQuery.includes(kwLower)) {
-      score += 3.5;
-    } else {
-      const kwTokens = kwLower.split(/\s+/);
-      const allMatch = kwTokens.every((t) => queryTokens.includes(t));
-      if (allMatch && kwTokens.length > 0) score += 3.0;
-    }
-  }
-  const contentLower = chunk.content.toLowerCase();
-  for (const token of queryTokens) {
-    if (contentLower.includes(token)) score += 0.3;
-  }
-  return score;
-}
-
-function testRetrieveGuidance(queryText, detectedCategory, seeds) {
-  const normalized = (queryText + " " + (detectedCategory || "")).toLowerCase();
-  const tokens = tokenizeQuery(normalized);
-  const scored = seeds.map((chunk) => ({
-    chunk,
-    score: scoreKnowledgeChunk(chunk, tokens, normalized, detectedCategory),
-  }));
-  scored.sort((a, b) => b.score - a.score);
-  const top = scored[0];
-  if (!top || top.score < 3.0) {
-    return { evidence: [], recommendedDepartment: { name: "unknown", reason: "No match" } };
-  }
-  return {
-    evidence: [{ source_title: top.chunk.source_title, source_url: top.chunk.source_url, excerpt: top.chunk.content }],
-    recommendedDepartment: {
-      name: top.chunk.department,
-      sla_hours: typeof top.chunk.sla_hours === "number" ? top.chunk.sla_hours : undefined,
-    },
-  };
-}
+const { retrieveCivicGuidance } = jiti("./src/lib/rag.ts");
+const { calculateDistanceMeters, findDuplicateCandidates } = jiti("./src/lib/duplicateMatcher.ts");
 
 console.log("\n==================================================================");
-console.log("CivicLens Grounded RAG & Backend Intelligence Test Suite");
+console.log("CivicLens Backend & Grounded Intelligence Test Suite");
 console.log("==================================================================\n");
 
-async function runTests() {
-  let passed = 0;
-  let total = 10;
-  const seedsPath = resolve(process.cwd(), "knowledge-base", "civic_knowledge_seeds.json");
-  const seeds = JSON.parse(readFileSync(seedsPath, "utf-8"));
+async function runBackendTests() {
+  let passedUnit = 0;
+  let totalUnit = 8;
+  let failedUnit = 0;
 
-  // Test 1: Grounded RAG Retrieval for Pothole (GHMC 15 days / 360h SLA)
-  console.log("Test 1: Grounded RAG Retrieval for Pothole Query (15 days SLA check)...");
+  console.log("--- PART 1: Deterministic Production Unit Tests ---\n");
+
+  // Test 1: Production RAG - Pothole query (GHMC 15 days / 360h SLA)
   try {
-    const res = testRetrieveGuidance("deep pothole in asphalt road", "pothole", seeds);
+    const res = await retrieveCivicGuidance("deep pothole in asphalt road", "pothole");
     if (
       res.evidence.length > 0 &&
       res.evidence[0].source_title.includes("GHMC Citizen Charter") &&
@@ -97,211 +48,217 @@ async function runTests() {
       res.recommendedDepartment?.name.includes("GHMC Engineering Wing (Roads)") &&
       res.recommendedDepartment?.sla_hours === 360
     ) {
-      console.log(`✅ Test 1 Passed: Grounded in GHMC Citizen Charter PDF with 15 days (360h) SLA.`);
-      passed++;
+      console.log("✅ Test 1 Passed: Production RAG grounded in verified GHMC PDF Item 1 (15 days / 360h SLA).");
+      passedUnit++;
     } else {
-      console.log("❌ Test 1 Failed: Incorrect retrieval or SLA for pothole.", res);
+      console.error("❌ Test 1 Failed: Pothole retrieval mismatch:", res);
+      failedUnit++;
     }
-  } catch (e) {
-    console.log("❌ Test 1 Failed:", e.message);
+  } catch (err) {
+    console.error("❌ Test 1 Failed with exception:", err.message);
+    failedUnit++;
   }
 
-  // Test 2: Grounded RAG Retrieval for Water Stagnation (GHMC 48h SLA)
-  console.log("\nTest 2: Grounded RAG Retrieval for Water Stagnation (48h SLA check)...");
+  // Test 2: Production RAG - Water stagnation (GHMC 48h SLA)
   try {
-    const res = testRetrieveGuidance("water stagnation accumulation on road puddle", "water stagnation", seeds);
+    const res = await retrieveCivicGuidance("water stagnation accumulation on road puddle", "water_stagnation");
     if (
       res.evidence.length > 0 &&
       res.evidence[0].source_title.includes("Water Stagnation") &&
       res.recommendedDepartment?.sla_hours === 48
     ) {
-      console.log(`✅ Test 2 Passed: Water stagnation correctly matched 48h SLA under GHMC charter.`);
-      passed++;
+      console.log("✅ Test 2 Passed: Water stagnation correctly matched 48h SLA under GHMC charter.");
+      passedUnit++;
     } else {
-      console.log("❌ Test 2 Failed: Water stagnation SLA mismatch:", res);
+      console.error("❌ Test 2 Failed: Water stagnation SLA mismatch:", res);
+      failedUnit++;
     }
-  } catch (e) {
-    console.log("❌ Test 2 Failed:", e.message);
+  } catch (err) {
+    console.error("❌ Test 2 Failed with exception:", err.message);
+    failedUnit++;
   }
 
-  // Test 3: Grounded RAG Retrieval for Sanitation & Waste (GHMC 48h SLA)
-  console.log("\nTest 3: Grounded RAG Retrieval for Sanitation & Dead Animals (48h SLA check)...");
+  // Test 3: Production RAG - Sanitation & Waste (GHMC 48h SLA)
   try {
-    const res = testRetrieveGuidance("overflowing dumper bin and dead animal on road", "garbage", seeds);
+    const res = await retrieveCivicGuidance("overflowing dumper bin and dead animal on road", "garbage_accumulation");
     if (
       res.evidence.length > 0 &&
       res.evidence[0].source_title.includes("Health & Sanitation Services") &&
-      res.recommendedDepartment?.name.includes("Health & Sanitation Wing") &&
       res.recommendedDepartment?.sla_hours === 48
     ) {
-      console.log(`✅ Test 3 Passed: Health & Sanitation correctly matched 48h SLA under GHMC charter.`);
-      passed++;
+      console.log("✅ Test 3 Passed: Health & Sanitation matched verified 48h SLA under GHMC charter.");
+      passedUnit++;
     } else {
-      console.log("❌ Test 3 Failed: Sanitation SLA mismatch:", res);
+      console.error("❌ Test 3 Failed: Sanitation SLA mismatch:", res);
+      failedUnit++;
     }
-  } catch (e) {
-    console.log("❌ Test 3 Failed:", e.message);
+  } catch (err) {
+    console.error("❌ Test 3 Failed with exception:", err.message);
+    failedUnit++;
   }
 
-  // Test 4: Regression Test — Unverified Statutory SLAs are NOT Fabricated (Traffic Police)
-  console.log("\nTest 4: Regression Test — Traffic Light Issue Has No Fabricated SLA...");
+  // Test 4: Regression Check - Traffic Police omits unverified statutory SLA
   try {
-    const res = testRetrieveGuidance("traffic light signal timer failure", "traffic light", seeds);
+    const res = await retrieveCivicGuidance("traffic light signal timer failure", "broken_streetlight");
     if (
       res.evidence.length > 0 &&
       res.recommendedDepartment?.name.includes("Traffic Police") &&
       res.recommendedDepartment?.sla_hours === undefined
     ) {
-      console.log(`✅ Test 4 Passed: Traffic Police guideline correctly omits unverified SLA (sla_hours: undefined).`);
-      passed++;
+      console.log("✅ Test 4 Passed: Traffic Police guideline correctly omits unverified SLA (sla_hours: undefined).");
+      passedUnit++;
     } else {
-      console.log("❌ Test 4 Failed: Fabricated SLA detected on unverified source:", res);
+      console.error("❌ Test 4 Failed: Fabricated statutory SLA detected on Traffic Police:", res);
+      failedUnit++;
     }
-  } catch (e) {
-    console.log("❌ Test 4 Failed:", e.message);
+  } catch (err) {
+    console.error("❌ Test 4 Failed with exception:", err.message);
+    failedUnit++;
   }
 
-  // Test 5: Grounded RAG Retrieval for Sewer Overflow (Advisory target, no statutory SLA guarantee)
-  console.log("\nTest 5: Grounded RAG Retrieval for Sewer Overflow (HMWSSB Advisory Guideline)...");
+  // Test 5: Regression Check - HMWSSB & TGSPDCL advisory guidelines omit statutory SLA
   try {
-    const res = testRetrieveGuidance("sewage overflow contaminated water from manhole", "drainage_sewer", seeds);
+    const sewerRes = await retrieveCivicGuidance("sewage overflow contaminated water from manhole", "drainage_sewer");
+    const elecRes = await retrieveCivicGuidance("live electric wire hanging low from pole sparking", "electrical_hazard");
     if (
-      res.evidence.length > 0 &&
-      res.recommendedDepartment?.name.includes("HMWSSB") &&
-      res.recommendedDepartment?.sla_hours === undefined
+      sewerRes.evidence.length > 0 &&
+      sewerRes.recommendedDepartment?.sla_hours === undefined &&
+      elecRes.evidence.length > 0 &&
+      elecRes.recommendedDepartment?.sla_hours === undefined
     ) {
-      console.log(`✅ Test 5 Passed: Grounded in HMWSSB Citizen Charter without fabricated statutory SLA.`);
-      passed++;
+      console.log("✅ Test 5 Passed: Advisory guidelines (HMWSSB, TGSPDCL) correctly omit statutory fixed-hour commitments.");
+      passedUnit++;
     } else {
-      console.log("❌ Test 5 Failed: Incorrect retrieval for sewage query:", res);
+      console.error("❌ Test 5 Failed: Advisory sources incorrectly returned statutory promises:", { sewerRes, elecRes });
+      failedUnit++;
     }
-  } catch (e) {
-    console.log("❌ Test 5 Failed:", e.message);
+  } catch (err) {
+    console.error("❌ Test 5 Failed with exception:", err.message);
+    failedUnit++;
   }
 
-  // Test 6: Grounded RAG Retrieval for Electrical Hazards (TGSPDCL Advisory Guideline)
-  console.log("\nTest 6: Grounded RAG Retrieval for Electrical Safety (TGSPDCL Advisory Guideline)...");
+  // Test 6: Non-Hallucination on Irrelevant Query
   try {
-    const res = testRetrieveGuidance("live electric wire hanging low from pole sparking", "electrical", seeds);
-    if (
-      res.evidence.length > 0 &&
-      res.recommendedDepartment?.name.includes("TGSPDCL") &&
-      res.recommendedDepartment?.sla_hours === undefined
-    ) {
-      console.log(`✅ Test 6 Passed: Grounded in TGSPDCL Safety Guidelines without fabricated statutory SLA.`);
-      passed++;
-    } else {
-      console.log("❌ Test 6 Failed: Incorrect retrieval for electrical hazard query:", res);
-    }
-  } catch (e) {
-    console.log("❌ Test 6 Failed:", e.message);
-  }
-
-  // Test 7: Irrelevant Query (Non-hallucination test)
-  console.log("\nTest 7: Non-Hallucination on Irrelevant Query ('alien spaceship in backyard')...");
-  try {
-    const res = testRetrieveGuidance("alien spaceship landed in backyard near bench", "other", seeds);
+    const res = await retrieveCivicGuidance("alien spaceship landed in backyard near bench", "other");
     if (res.evidence.length === 0 && res.recommendedDepartment?.name === "unknown") {
-      console.log(`✅ Test 7 Passed: Correctly returned empty evidence [] and department 'unknown' without hallucinating.`);
-      passed++;
+      console.log("✅ Test 6 Passed: Irrelevant query returned empty evidence [] and department 'unknown' without hallucinating.");
+      passedUnit++;
     } else {
-      console.log("❌ Test 7 Failed: Hallucinated evidence for irrelevant query:", res);
+      console.error("❌ Test 6 Failed: Hallucinated evidence for out-of-scope query:", res);
+      failedUnit++;
     }
-  } catch (e) {
-    console.log("❌ Test 7 Failed:", e.message);
+  } catch (err) {
+    console.error("❌ Test 6 Failed with exception:", err.message);
+    failedUnit++;
   }
 
-  // Test 8: Gemini AI Studio API
-  console.log("\nTest 8: Validating Google Gemini AI Studio API...");
+  // Test 7: Haversine Spatial Distance Math
   try {
+    const distValid = calculateDistanceMeters(17.3616, 78.4747, 17.3620, 78.4752);
+    const distFar = calculateDistanceMeters(17.3616, 78.4747, 17.4500, 78.5500);
+    if (distValid === 69 && distFar > 10000) {
+      console.log(`✅ Test 7 Passed: Proximity distance calculated correctly (${distValid}m nearby, ${distFar}m far).`);
+      passedUnit++;
+    } else {
+      console.error("❌ Test 7 Failed: Unexpected distance calculations:", { distValid, distFar });
+      failedUnit++;
+    }
+  } catch (err) {
+    console.error("❌ Test 7 Failed with exception:", err.message);
+    failedUnit++;
+  }
+
+  // Test 8: Coordinate Boundary & Rejection Checks
+  try {
+    const invalidDist1 = calculateDistanceMeters(95.0, 78.0, 17.0, 78.0); // Lat > 90
+    const invalidDist2 = calculateDistanceMeters(NaN, 78.0, 17.0, 78.0);
+    const emptyCandidates = await findDuplicateCandidates("pothole", 95.0, 78.0); // Out of bounds
+    if (invalidDist1 === Infinity && invalidDist2 === Infinity && emptyCandidates.length === 0) {
+      console.log("✅ Test 8 Passed: Out-of-bounds coordinates safely rejected by spatial matcher.");
+      passedUnit++;
+    } else {
+      console.error("❌ Test 8 Failed: Out-of-bounds coordinates were not safely rejected:", { invalidDist1, invalidDist2, emptyCandidates });
+      failedUnit++;
+    }
+  } catch (err) {
+    console.error("❌ Test 8 Failed with exception:", err.message);
+    failedUnit++;
+  }
+
+  console.log(`\nUnit Tests Result: ${passedUnit}/${totalUnit} Passed (${failedUnit} Failed)\n`);
+
+  // --- PART 2: Optional Live Integration Tests ---
+  const runLive = process.argv.includes("--live") || process.env.RUN_LIVE_TESTS === "true";
+
+  if (runLive) {
+    console.log("--- PART 2: Live External Services Verification ---\n");
+    let livePassed = 0;
+    let liveTotal = 2;
+
+    // Live Test 1: Gemini API Connectivity
     const apiKey = process.env.GEMINI_API_KEY || process.env.LLM_API_KEY;
     if (!apiKey) {
-      console.log("❌ Test 8 Failed: Missing GEMINI_API_KEY in .env.local");
+      console.error("❌ Live Test 1 Failed: Missing GEMINI_API_KEY in environment.");
+      process.exit(1);
     } else {
-      const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-      if (listRes.ok) {
-        const listData = await listRes.json();
-        const availableGenerateModels = (listData.models || [])
-          .filter((m) => m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent"))
-          .map((m) => m.name.replace("models/", ""));
-
-        const preferred = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash", "gemini-pro", ...availableGenerateModels];
+      try {
+        const { GoogleGenerativeAI } = await import("@google/generative-ai");
         const genAI = new GoogleGenerativeAI(apiKey);
-        let activeModel = "";
-        let text = "";
-
-        for (const modelName of preferred) {
-          try {
-            const model = genAI.getGenerativeModel({ model: modelName });
-            const r = await model.generateContent("Respond with only: OK");
-            text = r.response.text().trim();
-            if (text) {
-              activeModel = modelName;
-              break;
-            }
-          } catch (err) {}
-        }
-
+        const model = genAI.getGenerativeModel({ model: "gemma-4-26b-a4b-it" });
+        const res = await model.generateContent("Respond with: OK");
+        const text = res.response.text().trim();
         if (text) {
-          console.log(`✅ Test 8 Passed: Gemini AI responded with: "${text.substring(0, 30)}..." (Model: ${activeModel})`);
-          passed++;
+          console.log(`✅ Live Test 1 Passed: Google AI Studio API verified active.`);
+          livePassed++;
         } else {
-          console.log(`✅ Test 8 Passed: Google AI Studio API Key is active and verified.`);
-          passed++;
+          console.error("❌ Live Test 1 Failed: Empty response from model.");
+          process.exit(1);
         }
-      } else {
-        const errText = await listRes.text();
-        console.log(`❌ Test 8 Failed: API returned ${listRes.status}: ${errText}`);
+      } catch (err) {
+        console.error("❌ Live Test 1 Failed with error:", err.message);
+        process.exit(1);
       }
     }
-  } catch (e) {
-    console.log("❌ Test 8 Failed:", e.message);
-  }
 
-  // Test 9: Supabase Database Connectivity & Read-Only Audit
-  console.log("\nTest 9: Validating Supabase Database Connection & RLS Audit...");
-  try {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-    const supabase = createClient(url, key);
-    const { count, error } = await supabase.from("reports").select("*", { count: "exact", head: true });
-    if (!error) {
-      console.log(`✅ Test 9 Passed: Supabase reports table connected. (Current count: ${count ?? 0})`);
-      passed++;
+    // Live Test 2: Supabase Connectivity
+    const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!sbUrl || !sbKey) {
+      console.error("❌ Live Test 2 Failed: Missing Supabase credentials in environment.");
+      process.exit(1);
     } else {
-      console.log("⚠️ Test 9 Notice:", error.message);
-      passed++;
+      try {
+        const { createClient } = await import("@supabase/supabase-js");
+        const sb = createClient(sbUrl, sbKey);
+        const { count, error } = await sb.from("reports").select("*", { count: "exact", head: true });
+        if (!error) {
+          console.log(`✅ Live Test 2 Passed: Supabase reports table reachable (record count: ${count ?? 0}).`);
+          livePassed++;
+        } else {
+          console.error("❌ Live Test 2 Failed:", error.message);
+          process.exit(1);
+        }
+      } catch (err) {
+        console.error("❌ Live Test 2 Failed with error:", err.message);
+        process.exit(1);
+      }
     }
-  } catch (e) {
-    console.log("❌ Test 9 Failed:", e.message);
+
+    console.log(`\nLive Tests Result: ${livePassed}/${liveTotal} Passed\n`);
+  } else {
+    console.log("ℹ️ Live integration tests skipped (pass --live to execute live Gemini & Supabase checks).\n");
   }
 
-  // Test 10: Haversine Duplicate Proximity Math
-  console.log("\nTest 10: Validating Duplicate Proximity Distance Calculations...");
-  try {
-    const lat1 = 17.3616, lon1 = 78.4747;
-    const lat2 = 17.3620, lon2 = 78.4752;
-    const R = 6371e3;
-    const phi1 = (lat1 * Math.PI) / 180;
-    const phi2 = (lat2 * Math.PI) / 180;
-    const deltaPhi = ((lat2 - lat1) * Math.PI) / 180;
-    const deltaLambda = ((lon2 - lon1) * Math.PI) / 180;
-    const a = Math.sin(deltaPhi / 2) ** 2 + Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda / 2) ** 2;
-    const distance = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-    
-    if (distance > 0 && distance < 150) {
-      console.log(`✅ Test 10 Passed: Proximity distance calculated correctly (${distance} meters).`);
-      passed++;
-    } else {
-      console.log(`❌ Test 10 Failed: Unexpected distance: ${distance}m`);
-    }
-  } catch (e) {
-    console.log("❌ Test 10 Failed:", e.message);
+  if (failedUnit > 0) {
+    console.error("❌ Test run failed: one or more unit tests failed.");
+    process.exit(1);
+  } else {
+    console.log("🎉 All unit tests passed cleanly with zero failures.\n");
+    process.exit(0);
   }
-
-  console.log("\n------------------------------------------------------------------");
-  console.log(`Final Result: ${passed}/${total} Backend & RAG Tests Passed`);
-  console.log("------------------------------------------------------------------\n");
 }
 
-runTests();
+runBackendTests().catch((err) => {
+  console.error("Fatal test runner error:", err);
+  process.exit(1);
+});

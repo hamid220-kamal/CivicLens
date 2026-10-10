@@ -10,6 +10,19 @@ export function calculateDistanceMeters(
   lat2: number,
   lon2: number
 ): number {
+  if (
+    typeof lat1 !== "number" || !isFinite(lat1) ||
+    typeof lon1 !== "number" || !isFinite(lon1) ||
+    typeof lat2 !== "number" || !isFinite(lat2) ||
+    typeof lon2 !== "number" || !isFinite(lon2) ||
+    lat1 < -90 || lat1 > 90 ||
+    lat2 < -90 || lat2 > 90 ||
+    lon1 < -180 || lon1 > 180 ||
+    lon2 < -180 || lon2 > 180
+  ) {
+    return Infinity;
+  }
+
   const R = 6371e3; // Earth radius in meters
   const phi1 = (lat1 * Math.PI) / 180;
   const phi2 = (lat2 * Math.PI) / 180;
@@ -25,8 +38,8 @@ export function calculateDistanceMeters(
 }
 
 /**
- * Search for potential duplicate reports based on geographic proximity and issue category.
- * Maximum proximity threshold: 250 meters.
+ * Search for potential duplicate report candidates based on geographic proximity and issue category.
+ * Enforces a strict 250m threshold and excludes test records or inappropriate statuses.
  */
 export async function findDuplicateCandidates(
   issueType: string,
@@ -34,32 +47,61 @@ export async function findDuplicateCandidates(
   longitude: number | null,
   currentReportId?: string
 ): Promise<PossibleDuplicateCandidate[]> {
-  if (latitude === null || longitude === null) {
+  // Validate coordinates
+  if (
+    latitude === null ||
+    longitude === null ||
+    typeof latitude !== "number" ||
+    typeof longitude !== "number" ||
+    !isFinite(latitude) ||
+    !isFinite(longitude) ||
+    latitude < -90 ||
+    latitude > 90 ||
+    longitude < -180 ||
+    longitude > 180
+  ) {
     return [];
   }
 
   try {
     const supabase = getSupabaseServerClient();
-    const { data: reports, error } = await supabase
+    const MAX_DISTANCE_METERS = 250;
+
+    // Geographic bounding box envelope (~380 meters to bound database query)
+    const deltaLat = 0.0035;
+    const cosLat = Math.cos((latitude * Math.PI) / 180);
+    const deltaLon = deltaLat / (cosLat > 0.01 ? cosLat : 1.0);
+
+    let query = supabase
       .from("reports")
-      .select("id, issue_type, latitude, longitude, created_at, incident_id, description_summary, description")
-      .order("created_at", { ascending: false })
-      .limit(50);
+      .select("id, issue_type, latitude, longitude, created_at, incident_id, description_summary, status")
+      .neq("status", "test_verification")
+      .neq("status", "cancelled")
+      .neq("status", "rejected")
+      .gte("latitude", latitude - deltaLat)
+      .lte("latitude", latitude + deltaLat)
+      .gte("longitude", longitude - deltaLon)
+      .lte("longitude", longitude + deltaLon)
+      .limit(20);
+
+    if (currentReportId) {
+      query = query.neq("id", currentReportId);
+    }
+
+    const { data: reports, error } = await query;
 
     if (error || !reports) {
-      console.warn("Could not query existing reports for duplicate matching:", error?.message);
       return [];
     }
 
     const candidates: PossibleDuplicateCandidate[] = [];
-    const MAX_DISTANCE_METERS = 250;
+    const normalizedTargetType = (issueType || "").trim().toLowerCase();
 
     for (const report of reports) {
       if (currentReportId && report.id === currentReportId) {
         continue;
       }
 
-      // Check coordinates
       const repLat = typeof report.latitude === "number" ? report.latitude : parseFloat(report.latitude);
       const repLon = typeof report.longitude === "number" ? report.longitude : parseFloat(report.longitude);
 
@@ -70,32 +112,31 @@ export async function findDuplicateCandidates(
       const distance = calculateDistanceMeters(latitude, longitude, repLat, repLon);
 
       if (distance <= MAX_DISTANCE_METERS) {
+        const reportType = (report.issue_type || "").trim().toLowerCase();
         const isSameType =
-          report.issue_type &&
-          (report.issue_type.toLowerCase().includes(issueType.toLowerCase()) ||
-            issueType.toLowerCase().includes(report.issue_type.toLowerCase()));
+          reportType.length > 0 &&
+          (reportType.includes(normalizedTargetType) || normalizedTargetType.includes(reportType));
 
         if (isSameType) {
-          // Calculate similarity score based on proximity (closer = higher score)
-          const proximityScore = Math.max(0.4, 1 - distance / MAX_DISTANCE_METERS);
-          const matchScore = Math.round(proximityScore * 100) / 100;
+          const proximityFactor = Math.max(0.4, 1 - distance / MAX_DISTANCE_METERS);
+          const matchScore = Math.round(proximityFactor * 100) / 100;
 
           candidates.push({
             report_id: report.id,
             incident_id: report.incident_id || null,
             distance_meters: distance,
             created_at: report.created_at,
-            similarity_reason: `Reported matching defect (${report.issue_type}) approx. ${distance}m away`,
+            similarity_reason: `Potential candidate: matching defect (${report.issue_type}) approx. ${distance}m away`,
             match_score: matchScore,
           });
         }
       }
     }
 
-    // Sort by closest distance
+    // Sort by proximity ascending, returning top 5 candidates
     return candidates.sort((a, b) => (a.distance_meters || 0) - (b.distance_meters || 0)).slice(0, 5);
   } catch (err) {
-    console.error("Duplicate matcher error:", (err as Error).message);
+    console.warn("Duplicate matcher query notice:", (err as Error).message);
     return [];
   }
 }
